@@ -2,4 +2,4 @@
 *.log
 *.config
 *test*
-api_tokens.json
+*api_tokens.json*
