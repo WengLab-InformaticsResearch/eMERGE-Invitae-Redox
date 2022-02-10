@@ -137,7 +137,9 @@ for record in result:
         try:
             r = requests.post(cu_local_endpoint,data=data)
             print('HTTP Status: ' + str(r.status_code))
-            print(r.text)
-            flag = 0
+            if r.status_code == 200:
+                flag = 0
+            else:
+                print(r.status_code)
         except:
-            print(r.json())
+            print(r.status_code)
