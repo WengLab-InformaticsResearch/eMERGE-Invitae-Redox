@@ -36,13 +36,13 @@
     * make sure the field name has been adjusted. (avoid conflict when merging with R4)
     * obtain new API tokens and change `api_tokens.json` accordingly.
 
-4. Use `project_create.py` to dump the dictionary from both R4 and local redcap projects, and then load into the local redcap project created in **3**.
+4. Use `project_setup.py` to dump the dictionary from both R4 and local redcap projects, and then load into the local redcap project created in **3**.
     * fixed the conflicts by renaming fields and instrument.
     * enable on repeated instument (GIRA, Mono, BROAD)
-5. Modify `r4_data_import.py` to pull R4 data periodically into local Redcap
+5. Modify `data_pull_from_r4.py` to pull R4 data periodically into local Redcap
     - set up crob job for daily pull. An example is showed below.
         ```sh
-        0 0 * * * /home/cl3720/miniconda3/bin/python /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/r4_data_import.py >> /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/crontab.log
+        0 0 * * * /home/cl3720/miniconda3/bin/python /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/data_pull_from_r4.py >> /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/crontab.log
         ```
 5. Set up alert machanism to send out auto reminder.
     - if [__link] = 1

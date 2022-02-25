@@ -11,9 +11,7 @@ r4_api_endpoint = 'https://redcap.vanderbilt.edu/api/'
 # Get local REDCap version
 data = {
     'token': api_key_r4,
-    'content': 'surveyLink',
-    'record': 207,
-    'instrument': 'primary_consent'
+    'content': 'version'
 }
 r = requests.post(r4_api_endpoint,data=data)
 print('HTTP Status: ' + str(r.status_code))
