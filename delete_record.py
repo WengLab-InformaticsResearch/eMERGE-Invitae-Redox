@@ -1,9 +1,5 @@
 import requests
 import json
-from pprint import pprint
-from datetime import datetime
-from io import StringIO
-import pandas as pd
 
 def read_api_config(config_file = './api_tokens.json'):
     api_token_file = config_file
@@ -16,24 +12,19 @@ def read_api_config(config_file = './api_tokens.json'):
     r4_api_endpoint = api_conf['r4_api_endpoint'] # R4 api endpoint
     return api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint
 
-def get_api_version(api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint):
+def delete_record(record_id,api_key_local,cu_local_endpoint):
     data = {
         'token': api_key_local,
-        'content': 'version'
+        'action': 'delete',
+        'content': 'record',
+        'records[0]': str(record_id),
     }
     r = requests.post(cu_local_endpoint,data=data)
     print('HTTP Status: ' + str(r.status_code))
-    print('Local redcap version : ' + str(r.content))
-    data = {
-        'token': api_key_r4,
-        'content': 'version'
-    }
-    r = requests.post(r4_api_endpoint,data=data)
-    print('HTTP Status: ' + str(r.status_code))
-    print('R4 redcap version : ' + str(r.content))
+    print(r.text)
 
 if __name__ == "__main__":
     api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint = read_api_config()
-    get_api_version(api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint)
-
-
+    record_id_list = [24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52]
+    for record_id in record_id_list:
+        delete_record(record_id,api_key_local,cu_local_endpoint)

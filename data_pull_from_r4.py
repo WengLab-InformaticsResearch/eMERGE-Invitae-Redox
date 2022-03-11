@@ -1,4 +1,6 @@
+from ast import Del
 from turtle import left
+from pyrsistent import b
 import requests
 import json
 from datetime import datetime
@@ -48,97 +50,99 @@ def export_data_from_redcap(api_key, api_endpoint):
             return data
         else:
             flag = flag + 1
-       
 
-def merge_data(local_data, r4_data):
-    logging.info("merging two datasets")
+def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest):
+    record_id = r4_record['record_id'] 
+    participant_lab_id = r4_record['participant_lab_id'].strip().lower()
+    first_name = r4_record['first_name'].strip().lower()
+    last_name= r4_record['last_name'].strip().lower()
+    date_of_birth= r4_record['date_of_birth'].strip().lower()
+    empty_name_flag = (first_name == '' or  last_name == '' or date_of_birth == '')
+    if record_id in local_data_df['record_id'].drop_duplicates().tolist():
+        cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
+        r4_yn = None
+    elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist():
+        cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
+        r4_yn = None
+    elif not empty_name_flag:
+        subset_df = local_data_df
+        subset_df = subset_df[subset_df['first_name']==first_name]
+        subset_df = subset_df[subset_df['last_name']==last_name]
+        subset_df = subset_df[subset_df['date_of_birth']==date_of_birth]
+        if subset_df.shape[0] > 0:
+            cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
+            r4_yn = None
+        else:
+            cuimc_id = cuimc_id_latest + 1
+            cuimc_id_latest = cuimc_id
+            r4_yn = "1"
+    else:
+        cuimc_id = None
+        r4_yn = None
+    return cuimc_id, cuimc_id_latest, r4_yn
+
+
+
+def indexing_local_data(local_data):
+    logging.info("indexing local dataset")
     local_data_df = pd.DataFrame(local_data)
-    r4_data_df = pd.DataFrame(r4_data)
-
     # identify the fields for mapping purpose in local data
-    local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id']]
+    local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id','record_id']]
     local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
-
     # get latest CUIMC id
     cuimc_id_latest = local_data_df[['cuimc_id']].astype(int).max()[0]
-
     # clean up the fields on both for match purpose.
     local_data_df['first_name'] = local_data_df['first_name'].str.strip().str.lower()
     local_data_df['last_name'] = local_data_df['last_name'].str.strip().str.lower()
     local_data_df['date_of_birth'] = local_data_df['date_of_birth'].str.strip().str.lower()
     local_data_df['participant_lab_id'] = local_data_df['participant_lab_id'].str.strip().str.lower()
-    r4_data_df['first_name'] = r4_data_df['first_name'].str.strip().str.lower()
-    r4_data_df['last_name'] = r4_data_df['last_name'].str.strip().str.lower()
-    r4_data_df['date_of_birth'] = r4_data_df['date_of_birth'].str.strip().str.lower()
-    r4_data_df['participant_lab_id'] = r4_data_df['participant_lab_id'].str.strip().str.lower()
+    return local_data_df, cuimc_id_latest
 
-    # if no participant lab IDs in local data, then matched by names and DOB.
-    noid_local_df = local_data_df[local_data_df['participant_lab_id']=='']
-    noid_local_df.drop(['participant_lab_id'], axis=1,inplace=True) # to avoid duplicate conflict. 
-    # only match those with valid names and DOB
-    noid_local_df = noid_local_df[noid_local_df['first_name']!='']
-    noid_local_df = noid_local_df[noid_local_df['last_name']!='']
-    noid_local_df = noid_local_df[noid_local_df['date_of_birth']!=''] # may want to lose this in case there is DOB error?
-    # match r4 record_id.
-    noid_update_r4_df = noid_local_df.merge(r4_data_df,how='inner',on=['first_name','last_name','date_of_birth'])
-    noid_update_r4_df = noid_update_r4_df[['cuimc_id','record_id']].drop_duplicates()
+def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
+    # check is it a redcap_repeat_instrument
+    if r4_record['redcap_repeat_instance'] != '':
+        del r4_record['record_id']
+        del r4_record['r4_yn']
+    else:
+        if r4_record['r4_yn'] is None:
+            del r4_record['r4_yn']
 
-    # if exist participant lab IDs in local redcap, then matched by lab ID.
-    id_local_df = local_data_df[local_data_df['participant_lab_id']!='']
-    id_local_df.drop(['first_name'], axis=1,inplace=True) # to avoid duplicate conflict. 
-    id_local_df.drop(['last_name'], axis=1,inplace=True) # to avoid duplicate conflict. 
-    id_local_df.drop(['date_of_birth'], axis=1,inplace=True) # to avoid duplicate conflict. 
-    # match r4 record_id
-    id_update_r4_df = id_local_df.merge(r4_data_df,how='inner',on=['participant_lab_id'])
-    id_update_r4_df = id_update_r4_df[['cuimc_id','record_id']].drop_duplicates()
-
-    # build id mapping df for r4 data extraction.
-    record_id_update_df = pd.concat([id_update_r4_df,noid_update_r4_df]).drop_duplicates()
-
-    # left merge: if matched with local, update, otherwise add new records by assigning a auto incremented cuimc_id
-    r4_merge_df = r4_data_df.merge(record_id_update_df,how='left')
-    r4_merge_df.drop(['record_id'], axis=1,inplace=True) # to avoid duplicate conflict. 
-
-    # convert to json.
-    merged_records = json.loads(r4_merge_df.to_json(orient="records"))
-
-    return merged_records, cuimc_id_latest
-
-def update_local(merged_records,api_key_local,cu_local_endpoint,cuimc_id_latest): 
-    logging.info("update local redcap...")
-    for record in merged_records:
-        if record['cuimc_id'] is None:
-            # assign new id auto incremented.
-            record['cuimc_id'] = str(cuimc_id_latest + 1)
-            record['r4_yn'] = "1" # new record indicator
-            cuimc_id_latest = cuimc_id_latest + 1
-        
-        data = {
-            'token': api_key_local,
-            'content': 'record',
-            'action': 'import',
-            'format': 'json',
-            'type': 'flat',
-            'overwriteBehavior': 'overwrite',
-            'forceAutoNumber': 'false',
-            'data': json.dumps([record]),
-            'returnContent': 'count',
-            'returnFormat': 'json'
-        }
-        flag = 1
-        while(flag > 0 and flag < 5):
-            r = requests.post(cu_local_endpoint,data=data)
+    data = {
+        'token': api_key_local,
+        'content': 'record',
+        'action': 'import',
+        'format': 'json',
+        'type': 'flat',
+        'overwriteBehavior': 'overwrite',
+        'forceAutoNumber': 'false',
+        'data': json.dumps([r4_record]),
+        'returnContent': 'count',
+        'returnFormat': 'json'
+    }
+    flag = 1
+    while(flag > 0 and flag < 5):
+        r = requests.post(cu_local_endpoint,data=data)
+        if r.status_code == 200:
             logging.info('HTTP Status: ' + str(r.status_code))
-            if r.status_code == 200:
-                flag = 0
-            else:
-                flag = flag + 1
+            flag = 0
+        else:
+            logging.info('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + r4_record['record_id'])
+            flag = flag + 1
 
+def update_local(api_key_local,cu_local_endpoint,local_data_df, r4_data, cuimc_id_latest):
+    logging.info("update local redcap...")
+    for r4_record in r4_data:
+        cuimc_id, cuimc_id_latest, r4_yn = add_cuimc_id(r4_record,local_data_df, cuimc_id_latest)
+        if cuimc_id is not None:
+            r4_record['cuimc_id'] = str(cuimc_id)
+            r4_record['r4_yn'] = r4_yn # new record indicator
+            push_data_to_local(api_key_local,cu_local_endpoint,r4_record)
+            
 if __name__ == "__main__":
     api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint = read_api_config()
     local_data = export_data_from_redcap(api_key_local,cu_local_endpoint)
     r4_data = export_data_from_redcap(api_key_r4,r4_api_endpoint)
     if r4_data != []:
-        merged_records, cuimc_id_latest = merge_data(local_data, r4_data)
-        update_local(merged_records,api_key_local,cu_local_endpoint,cuimc_id_latest)
+        local_data_df, cuimc_id_latest = indexing_local_data(local_data)
+        update_local(api_key_local,cu_local_endpoint,local_data_df, r4_data, cuimc_id_latest)
     
