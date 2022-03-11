@@ -40,6 +40,11 @@
     * fixed the conflicts by renaming fields and instrument.
     * enable on repeated instument (GIRA, Mono, BROAD)
 5. Modify `data_pull_from_r4.py` to pull R4 data periodically into local Redcap
+    - Pull R4 data and match local data by 
+        1. record_id in r4; (This can be assigned a record_id in a local record to enable a forced manual match.) 
+        2. participant IDs; 
+        3. first_name, last_name & DOB.
+        4. If can not find a match in local data, create a new CUIMC_ID incremented. 
     - set up crob job for daily pull. An example is showed below.
         ```sh
         0 0 * * * /home/cl3720/miniconda3/bin/python /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/data_pull_from_r4.py >> /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/crontab.log
