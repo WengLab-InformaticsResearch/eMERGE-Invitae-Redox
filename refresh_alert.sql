@@ -16,4 +16,8 @@ DELETE FROM emerge4cuimclocalredcap.redcap_alerts_sent_log
 WHERE alert_sent_id in 
 (
 SELECT alert_sent_id FROM emerge4cuimclocalredcap.redcap_alerts_sent
+where alert_id in
+(SELECT alert_id FROM emerge4cuimclocalredcap.redcap_alerts
+where project_id = 33
+)
 );
