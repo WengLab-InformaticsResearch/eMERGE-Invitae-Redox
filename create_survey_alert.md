@@ -19,6 +19,7 @@
 ### 2. Go to "Alert & Notifications" and "Add New Alert"
 - The *re-evaluate* button is not for testing purpose.
 - To test, make sure all previous alert send events are cleared by executing SQL query [refresh_alert.sql](./refresh_alert.sql) on the backend.
+- You can also upload alerts. For example we used can be found [here](./EIVRecruitmentDatabaseClone3_Alerts_2022-03-17.csv)
 ![step 3](./alerts.png)
 ![step 4](./add_new_alert.png)
 
