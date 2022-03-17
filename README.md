@@ -50,6 +50,7 @@
         0 0 * * * /home/cl3720/miniconda3/bin/python /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/data_pull_from_r4.py >> /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/crontab.log
         ```
 5. Set up alert machanism to send out auto reminder.
+    - See [create_survey_alert.md](./create_survey_alert.md) for more details
     - if [__link] = 1
     - send out [__primary_consent_url]
     - data fetch will only trigger the alert once.
