@@ -1,19 +1,17 @@
 from ast import Del
+from distutils.command.config import config
 from turtle import left
+from jsonasobj2 import keys
 from pyrsistent import b
 import requests
 import json
 from datetime import datetime
 import pandas as pd
 import logging
-
-logging.basicConfig(filename='./data-pull.log', level=logging.INFO)
-now = datetime.now()
-dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-logging.info("Current Time =" +  dt_string)
+import argparse
 
 
-def read_api_config(config_file = './api_tokens.json'):
+def read_api_config(config_file):
     logging.info("reading api tokens and endpoint url...")
     api_token_file = config_file
     with open(api_token_file,'r') as f:
@@ -51,51 +49,70 @@ def export_data_from_redcap(api_key, api_endpoint):
         else:
             flag = flag + 1
 
-def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest):
+def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
     record_id = r4_record['record_id'] 
     participant_lab_id = r4_record['participant_lab_id'].strip().lower()
     first_name = r4_record['first_name'].strip().lower()
     last_name= r4_record['last_name'].strip().lower()
     date_of_birth= r4_record['date_of_birth'].strip().lower()
     empty_name_flag = (first_name == '' or  last_name == '' or date_of_birth == '')
-    if record_id in local_data_df['record_id'].drop_duplicates().tolist():
-        cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
-        r4_yn = None
-    elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist():
-        cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
-        r4_yn = None
-    elif not empty_name_flag:
-        subset_df = local_data_df
-        subset_df = subset_df[subset_df['first_name']==first_name]
-        subset_df = subset_df[subset_df['last_name']==last_name]
-        subset_df = subset_df[subset_df['date_of_birth']==date_of_birth]
-        if subset_df.shape[0] > 0:
-            cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
+    if local_data_df.shape[0] != 0: # not an empty local database
+        if record_id in current_mapping.keys():
+            cuimc_id = current_mapping[record_id] # repeated instrument record.
             r4_yn = None
-        else:
+        elif record_id in local_data_df['record_id'].drop_duplicates().tolist(): # map for previously pulled
+            cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
+            current_mapping[record_id] = cuimc_id
+            r4_yn = None
+        elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist(): # map for first time by participant_lab_id
+            cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
+            current_mapping[record_id] = cuimc_id
+            r4_yn = None
+        elif not empty_name_flag: 
+            subset_df = local_data_df
+            subset_df = subset_df[subset_df['first_name']==first_name]
+            subset_df = subset_df[subset_df['last_name']==last_name]
+            subset_df = subset_df[subset_df['date_of_birth']==date_of_birth]
+            if subset_df.shape[0] > 0: # map for first time by name and dob
+                cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
+                current_mapping[record_id] = cuimc_id
+                r4_yn = None
+            else:
+                cuimc_id = cuimc_id_latest + 1 # generate new id for first time R4 pull.
+                current_mapping[record_id] = cuimc_id
+                cuimc_id_latest = cuimc_id
+                r4_yn = "1"
+        else: # no identifier available in R4.
+            cuimc_id = None
+            r4_yn = None
+    else: # an empty local database
+        if record_id in current_mapping.keys():
+            cuimc_id = current_mapping[record_id] # repeated instrument record.
+            r4_yn = None
+        else: # generate new id for first time R4 pull.
             cuimc_id = cuimc_id_latest + 1
+            current_mapping[record_id] = cuimc_id
             cuimc_id_latest = cuimc_id
             r4_yn = "1"
-    else:
-        cuimc_id = None
-        r4_yn = None
-    return cuimc_id, cuimc_id_latest, r4_yn
-
-
+    return cuimc_id, cuimc_id_latest, r4_yn, current_mapping
 
 def indexing_local_data(local_data):
     logging.info("indexing local dataset")
-    local_data_df = pd.DataFrame(local_data)
-    # identify the fields for mapping purpose in local data
-    local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id','record_id']]
-    local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
-    # get latest CUIMC id
-    cuimc_id_latest = local_data_df[['cuimc_id']].astype(int).max()[0]
-    # clean up the fields on both for match purpose.
-    local_data_df['first_name'] = local_data_df['first_name'].str.strip().str.lower()
-    local_data_df['last_name'] = local_data_df['last_name'].str.strip().str.lower()
-    local_data_df['date_of_birth'] = local_data_df['date_of_birth'].str.strip().str.lower()
-    local_data_df['participant_lab_id'] = local_data_df['participant_lab_id'].str.strip().str.lower()
+    if local_data != []:
+        local_data_df = pd.DataFrame(local_data)
+        # identify the fields for mapping purpose in local data
+        local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id','record_id']]
+        local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
+        # get latest CUIMC id
+        cuimc_id_latest = local_data_df[['cuimc_id']].astype(int).max()[0]
+        # clean up the fields on both for match purpose.
+        local_data_df['first_name'] = local_data_df['first_name'].str.strip().str.lower()
+        local_data_df['last_name'] = local_data_df['last_name'].str.strip().str.lower()
+        local_data_df['date_of_birth'] = local_data_df['date_of_birth'].str.strip().str.lower()
+        local_data_df['participant_lab_id'] = local_data_df['participant_lab_id'].str.strip().str.lower()
+    else:
+        cuimc_id_latest = 0
+        local_data_df = pd.DataFrame()
     return local_data_df, cuimc_id_latest
 
 def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
@@ -131,15 +148,28 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
 
 def update_local(api_key_local,cu_local_endpoint,local_data_df, r4_data, cuimc_id_latest):
     logging.info("update local redcap...")
+    current_mapping = {}
     for r4_record in r4_data:
-        cuimc_id, cuimc_id_latest, r4_yn = add_cuimc_id(r4_record,local_data_df, cuimc_id_latest)
+        cuimc_id, cuimc_id_latest, r4_yn, current_mapping = add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping)
         if cuimc_id is not None:
             r4_record['cuimc_id'] = str(cuimc_id)
             r4_record['r4_yn'] = r4_yn # new record indicator
             push_data_to_local(api_key_local,cu_local_endpoint,r4_record)
             
 if __name__ == "__main__":
-    api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint = read_api_config()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log', type=str, required=True, help="file to write log",)    
+    parser.add_argument('--token', type=str, required=True, help='json file with api tokens')    
+    args = parser.parse_args()
+    log_file = args.log
+    token_file = args.token
+
+    logging.basicConfig(filename=log_file, level=logging.INFO)
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    logging.info("Current Time =" +  dt_string)
+
+    api_key_local, api_key_r4, cu_local_endpoint, r4_api_endpoint = read_api_config(config_file = token_file)
     local_data = export_data_from_redcap(api_key_local,cu_local_endpoint)
     r4_data = export_data_from_redcap(api_key_r4,r4_api_endpoint)
     if r4_data != []:

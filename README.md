@@ -45,9 +45,10 @@
         2. participant IDs; 
         3. first_name, last_name & DOB.
         4. If can not find a match in local data, create a new CUIMC_ID incremented. 
-    - set up crob job for daily pull. An example is showed below.
+    - set up crob job for daily pull `cron_job.sh`. An example is showed below.
         ```sh
-        0 0 * * * /home/cl3720/miniconda3/bin/python /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/data_pull_from_r4.py >> /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/crontab.log
+        # m h  dom mon dow   command
+        0 0 * * * sh /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/cron_job.sh
         ```
 5. Set up alert machanism to send out auto reminder.
     - if [__link] = 1
