@@ -51,6 +51,7 @@
         0 0 * * * sh /phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/cron_job.sh
         ```
 5. Set up alert machanism to send out auto reminder.
+    - See [create_survey_alert.md](./create_survey_alert.md) for more details
     - if [__link] = 1
     - send out [__primary_consent_url]
     - data fetch will only trigger the alert once.
