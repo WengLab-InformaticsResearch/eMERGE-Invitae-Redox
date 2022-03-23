@@ -45,6 +45,7 @@
         2. participant IDs; 
         3. first_name, last_name & DOB.
         4. If can not find a match in local data, create a new CUIMC_ID incremented. 
+    - Also pull R4 surveyQueueLink via API for each record and store in [r4_survey_queue_link]
     - set up crob job for daily pull `cron_job.sh`. An example is showed below.
         ```sh
         # m h  dom mon dow   command
@@ -52,7 +53,7 @@
         ```
 5. Set up alert machanism to send out auto reminder.
     - See [create_survey_alert.md](./create_survey_alert.md) for more details
-    - if [__link] = 1
-    - send out [__primary_consent_url]
+    - if [previous_survey_complete] = '2' AND [reminder_survey_complete] !='2'
+    - send out [r4_survey_queue_link]
     - data fetch will only trigger the alert once.
 
