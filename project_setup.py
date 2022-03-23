@@ -37,8 +37,13 @@ r = requests.post(r4_api_endpoint,data=data)
 meta_r4_json = r.json()
 print('HTTP Status: ' + str(r.status_code))
 
-
-meta_json = meta_local_json + meta_r4_json
+# remove field already existing.
+meta_local_json_field_name_list = [i['field_name'] for i in meta_local_json]
+meta_r4_json_deduplicated = [i for i in meta_r4_json if i['field_name'] not in meta_local_json_field_name_list]
+meta_json = meta_local_json + meta_r4_json_deduplicated
+# redcap requires form in sequential order.
+meta_json.sort(key=lambda x: x["form_name"])
+# update local data dictionary
 data = {
     'token': api_key_local,
     'content': 'metadata',
@@ -48,3 +53,5 @@ data = {
 }
 r = requests.post(cu_local_endpoint,data=data)
 print('HTTP Status: ' + str(r.status_code))
+print('HTTP Status: ' + r.content.decode('utf-8'))
+

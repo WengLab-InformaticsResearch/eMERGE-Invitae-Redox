@@ -1,8 +1,5 @@
 from ast import Del
 from distutils.command.config import config
-from turtle import left
-from jsonasobj2 import keys
-from pyrsistent import b
 import requests
 import json
 from datetime import datetime
@@ -42,12 +39,39 @@ def export_data_from_redcap(api_key, api_endpoint):
     flag = 1
     while(flag > 0 and flag < 5):
         r = requests.post(api_endpoint,data=data)
-        logging.info('HTTP Status: ' + str(r.status_code))
         if r.status_code == 200:
+            logging.info('HTTP Status: ' + str(r.status_code))
             data = r.json()
             return data
         else:
+            logging.error('HTTP Status: ' + str(r.status_code))
+            logging.error(r.content)
             flag = flag + 1
+
+def export_survey_queue_link(api_key, api_endpoint,record_id):
+    data = {
+        'token': api_key,
+        'content': 'surveyQueueLink',
+        'action': 'export',
+        'format': 'json',
+        'returnFormat': 'json',
+        'record' : '51'
+    }
+    flag = 1
+    while(flag > 0 and flag < 5):
+        r = requests.post(api_endpoint,data=data)
+        if r.status_code == 200:
+            flag = 0
+            return_url = r.content.decode("utf-8") 
+            return return_url
+        else:
+            logging.error('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + record_id)
+            logging.error(r.content)
+            flag = flag + 1
+    return ""
+    
+    
+    
 
 def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
     record_id = r4_record['record_id'] 
@@ -116,13 +140,16 @@ def indexing_local_data(local_data):
     return local_data_df, cuimc_id_latest
 
 def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
+    record_id = r4_record['record_id']
     # check is it a redcap_repeat_instrument
     if r4_record['redcap_repeat_instance'] != '':
         del r4_record['record_id']
         del r4_record['r4_yn']
+        del r4_record['return_url_in_the_queue']
     else:
         if r4_record['r4_yn'] is None:
             del r4_record['r4_yn']
+
 
     data = {
         'token': api_key_local,
@@ -143,17 +170,20 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
             logging.info('HTTP Status: ' + str(r.status_code))
             flag = 0
         else:
-            logging.info('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + r4_record['record_id'])
+            logging.error('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + record_id)
+            logging.error(r.content)
             flag = flag + 1
 
-def update_local(api_key_local,cu_local_endpoint,local_data_df, r4_data, cuimc_id_latest):
+def update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest):
     logging.info("update local redcap...")
     current_mapping = {}
     for r4_record in r4_data:
         cuimc_id, cuimc_id_latest, r4_yn, current_mapping = add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping)
+        return_url = export_survey_queue_link(api_key=api_key_r4,api_endpoint=r4_api_endpoint,record_id=r4_record['record_id'])
         if cuimc_id is not None:
             r4_record['cuimc_id'] = str(cuimc_id)
             r4_record['r4_yn'] = r4_yn # new record indicator
+            r4_record['return_url_in_the_queue'] = return_url
             push_data_to_local(api_key_local,cu_local_endpoint,r4_record)
             
 if __name__ == "__main__":
@@ -174,5 +204,5 @@ if __name__ == "__main__":
     r4_data = export_data_from_redcap(api_key_r4,r4_api_endpoint)
     if r4_data != []:
         local_data_df, cuimc_id_latest = indexing_local_data(local_data)
-        update_local(api_key_local,cu_local_endpoint,local_data_df, r4_data, cuimc_id_latest)
+        update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest)
     
