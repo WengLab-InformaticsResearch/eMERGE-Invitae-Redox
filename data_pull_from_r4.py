@@ -55,7 +55,7 @@ def export_survey_queue_link(api_key, api_endpoint,record_id):
         'action': 'export',
         'format': 'json',
         'returnFormat': 'json',
-        'record' : '51'
+        'record' : record_id
     }
     flag = 1
     while(flag > 0 and flag < 5):
@@ -145,7 +145,7 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
     if r4_record['redcap_repeat_instance'] != '':
         del r4_record['record_id']
         del r4_record['r4_yn']
-        del r4_record['return_url_in_the_queue']
+        del r4_record['r4_survey_queue_link']
     else:
         if r4_record['r4_yn'] is None:
             del r4_record['r4_yn']
@@ -183,7 +183,7 @@ def update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, l
         if cuimc_id is not None:
             r4_record['cuimc_id'] = str(cuimc_id)
             r4_record['r4_yn'] = r4_yn # new record indicator
-            r4_record['return_url_in_the_queue'] = return_url
+            r4_record['r4_survey_queue_link'] = return_url
             push_data_to_local(api_key_local,cu_local_endpoint,r4_record)
             
 if __name__ == "__main__":
