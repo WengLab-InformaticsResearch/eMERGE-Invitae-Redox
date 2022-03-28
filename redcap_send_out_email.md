@@ -9,5 +9,6 @@
   define(`RELAY_MAILER',`esmtp')dnl
   define(`RELAY_MAILER_ARGS', `TCP $h 587')dnl
   ```
+- Check log `sudo tail /var/log/mail.log` for sending details
 - For CUIMC only
   - you need to send a tick to CUIMC IT to request to use CUIMC email secure SMTP server. (secure nova?). For the general one, you will get a SPF warning.
