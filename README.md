@@ -56,4 +56,5 @@
     - if [previous_survey_complete] = '2' AND [reminder_survey_complete] !='2'
     - send out [r4_survey_queue_link]
     - data fetch will only trigger the alert once.
+    - In addition, if you want to send out email via a valid SMTP server, please see [redcap_send_out_email.md](./redcap_send_out_email.md) for more details.
 
