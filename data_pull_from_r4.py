@@ -7,6 +7,11 @@ import pandas as pd
 import logging
 import argparse
 
+def read_ignore_fields(ignore_file):
+    logging.info("reading ignore fields...")
+    with open(ignore_file,'r') as f:
+        ignore_fields = [l.strip for l in f.readlines()]
+    return ignore_fields    
 
 def read_api_config(config_file):
     logging.info("reading api tokens and endpoint url...")
@@ -48,6 +53,12 @@ def export_data_from_redcap(api_key, api_endpoint):
             logging.error('HTTP Status: ' + str(r.status_code))
             logging.error(r.content)
             flag = flag + 1
+
+def read_accepted_fields(local_data):
+    local_data_df = pd.DataFrame(local_data)
+    accepted_fields = local_data_df.columns
+    return accepted_fields
+
 
 def export_survey_queue_link(api_key, api_endpoint,record_id):
     data = {
@@ -150,8 +161,10 @@ def clean_record(r4_record):
     else:
         if r4_record['r4_yn'] is None:
             del r4_record['r4_yn']
-    # delete redcap newly added 'survey_queue_link' field not existing in the local redcap
+    # patch 3/30 delete redcap newly added 'survey_queue_link' field not existing in the local redcap
     del r4_record['survey_queue_link']
+    # patch 5/19 delete redcap newly added 'your_or_your_childs_3' field not existing in the local redcap
+    del r4_record['your_or_your_childs_3']
     return r4_record
 
 def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
