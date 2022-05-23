@@ -141,7 +141,10 @@ def indexing_local_data(local_data):
         local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id','record_id']]
         local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
         # get latest CUIMC id
-        cuimc_id_latest = local_data_df[['cuimc_id']].astype(int).max()[0]
+        # patch 5/23 reserve the number > 10,000 for Epic imported records.
+        local_data_df['cuimc_id'] = local_data_df['cuimc_id'].astype(int)
+        cuimc_id_latest = local_data_df[local_data_df['cuimc_id'] < 9999][['cuimc_id']].max()[0]
+        logging.info('lastest auto generated cuimc id: ' + str(cuimc_id_latest))
         # clean up the fields on both for match purpose.
         local_data_df['first_name'] = local_data_df['first_name'].str.strip().str.lower()
         local_data_df['last_name'] = local_data_df['last_name'].str.strip().str.lower()
