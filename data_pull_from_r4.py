@@ -93,44 +93,71 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
     last_name= r4_record['last_name'].strip().lower()
     date_of_birth= r4_record['date_of_birth'].strip().lower()
     empty_name_flag = (first_name == '' or  last_name == '' or date_of_birth == '')
-    if local_data_df.shape[0] != 0: # not an empty local database
-        if record_id in current_mapping.keys():
-            cuimc_id = current_mapping[record_id] # repeated instrument record.
-            r4_yn = None
-        elif record_id in local_data_df['record_id'].drop_duplicates().tolist(): # map for previously pulled
-            cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
-            current_mapping[record_id] = cuimc_id
-            r4_yn = None
-        elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist(): # map for first time by participant_lab_id
-            cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
-            current_mapping[record_id] = cuimc_id
-            r4_yn = None
-        elif not empty_name_flag: 
-            subset_df = local_data_df
-            subset_df = subset_df[subset_df['first_name']==first_name]
-            subset_df = subset_df[subset_df['last_name']==last_name]
-            subset_df = subset_df[subset_df['date_of_birth']==date_of_birth]
-            if subset_df.shape[0] > 0: # map for first time by name and dob
-                cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
-                current_mapping[record_id] = cuimc_id
-                r4_yn = None
-            else:
-                cuimc_id = cuimc_id_latest + 1 # generate new id for first time R4 pull.
-                current_mapping[record_id] = cuimc_id
-                cuimc_id_latest = cuimc_id
-                r4_yn = "1"
-        else: # no identifier available in R4.
-            cuimc_id = None
-            r4_yn = None
-    else: # an empty local database
-        if record_id in current_mapping.keys():
-            cuimc_id = current_mapping[record_id] # repeated instrument record.
-            r4_yn = None
-        else: # generate new id for first time R4 pull.
+
+    # patch 6/6 match by child and parent seperatedly.
+    first_child = r4_record['first_name'].strip().lower()
+    last_child = r4_record['last_name'].strip().lower()
+    dob_child = r4_record['date_of_birth'].strip().lower()
+    age_of_interest = r4_record['age'].strip().lower()
+    empty_name_flag_child = (first_child == '' or  last_child == '' or dob_child == '')
+
+    if record_id in current_mapping.keys(): # repeated instrument record.
+        cuimc_id = current_mapping[record_id] 
+        r4_yn = 1
+    else:
+        if local_data_df.shape[0] == 0: # an empty local database
             cuimc_id = cuimc_id_latest + 1
             current_mapping[record_id] = cuimc_id
             cuimc_id_latest = cuimc_id
             r4_yn = "1"
+        else:
+            if record_id in local_data_df['record_id'].drop_duplicates().tolist(): # mapped by previously pulled record_id in local db.
+                cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
+                current_mapping[record_id] = cuimc_id
+                r4_yn = None
+            elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist(): # mapped by previously pulled participant_lab_id in local db.
+                cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
+                current_mapping[record_id] = cuimc_id
+                r4_yn = None
+            elif not empty_name_flag: # a valid r4 record with non empty name and dob.
+                if age_of_interest > 18: # mapping for adult
+                    subset_df = local_data_df
+                    subset_df = subset_df[subset_df['first_local']==first_name]
+                    subset_df = subset_df[subset_df['last_local']==last_name]
+                    subset_df = subset_df[subset_df['dob']==date_of_birth]
+                    subset_df = subset_df[subset_df['age']==age_of_interest]
+                    if subset_df.shape[0] > 0: # mapped by name & dob in local db.
+                        cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
+                        current_mapping[record_id] = cuimc_id
+                        r4_yn = None
+                    else: # patients not exist locally and generate new id for first time R4 pull.
+                        cuimc_id = cuimc_id_latest + 1 
+                        current_mapping[record_id] = cuimc_id
+                        cuimc_id_latest = cuimc_id
+                    r4_yn = "1"
+                else: # mapping for kid
+                    if not empty_name_flag_child: # a valid r4 record with non empty name and dob for both parents and kid
+                        subset_df = local_data_df
+                        subset_df = subset_df[subset_df['first_local']==first_name]
+                        subset_df = subset_df[subset_df['last_local']==last_name]
+                        subset_df = subset_df[subset_df['dob']==date_of_birth]
+                        subset_df = subset_df[subset_df['first_name_child']==first_child]
+                        subset_df = subset_df[subset_df['last_name_child']==last_child]
+                        subset_df = subset_df[subset_df['date_of_birth_child']==dob_child]
+                        subset_df = subset_df[subset_df['age']==age_of_interest]
+                        if subset_df.shape[0] > 0: # mapped by both name & dob in local db.
+                            cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
+                            current_mapping[record_id] = cuimc_id
+                            r4_yn = None
+                        else: # patients' kid not exist locally and generate new id for first time R4 pull.
+                            cuimc_id = cuimc_id_latest + 1
+                            current_mapping[record_id] = cuimc_id
+                            cuimc_id_latest = cuimc_id
+                            r4_yn = "1"
+                    else:
+                        cuimc_id = None
+                        r4_yn = None
+
     return cuimc_id, cuimc_id_latest, r4_yn, current_mapping
 
 def indexing_local_data(local_data):
@@ -138,18 +165,25 @@ def indexing_local_data(local_data):
     if local_data != []:
         local_data_df = pd.DataFrame(local_data)
         # identify the fields for mapping purpose in local data
-        local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','participant_lab_id','record_id']]
-        local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
+        # patch 6/6 match by child and parent seperatedly.
+        local_data_df = local_data_df[['cuimc_id','first_local','last_local','dob','last_child','child_first','dob_child','participant_lab_id','record_id','age']] 
+        local_data_df['participant_lab_id'] = local_data_df['participant_lab_id'].str.strip().str.lower()
+        local_data_df['record_id'] = local_data_df['record_id'].str.strip().str.lower()
+        # local_data_df = local_data_df.rename(columns={"first_local": "first_name", "last_local": "last_name", "dob": "date_of_birth"})
         # get latest CUIMC id
         # patch 5/23 reserve the number > 10,000 for Epic imported records.
         local_data_df['cuimc_id'] = local_data_df['cuimc_id'].astype(int)
         cuimc_id_latest = local_data_df[local_data_df['cuimc_id'] < 9999][['cuimc_id']].max()[0]
         logging.info('lastest auto generated cuimc id: ' + str(cuimc_id_latest))
         # clean up the fields on both for match purpose.
-        local_data_df['first_name'] = local_data_df['first_name'].str.strip().str.lower()
-        local_data_df['last_name'] = local_data_df['last_name'].str.strip().str.lower()
-        local_data_df['date_of_birth'] = local_data_df['date_of_birth'].str.strip().str.lower()
-        local_data_df['participant_lab_id'] = local_data_df['participant_lab_id'].str.strip().str.lower()
+        local_data_df['first_local'] = local_data_df['first_local'].str.strip().str.lower()
+        local_data_df['last_local'] = local_data_df['last_local'].str.strip().str.lower()
+        local_data_df['dob'] = local_data_df['dob'].str.strip().str.lower()
+        local_data_df['age'] = local_data_df['age'].str.strip().str.lower()
+
+        local_data_df['last_child'] = local_data_df['last_child'].str.strip().str.lower()
+        local_data_df['child_first'] = local_data_df['child_first'].str.strip().str.lower()
+        local_data_df['dob_child'] = local_data_df['dob_child'].str.strip().str.lower()
     else:
         cuimc_id_latest = 0
         local_data_df = pd.DataFrame()
