@@ -7,6 +7,7 @@
 ### To be done
 - Since R4 is constantly changing, a better machanism is needed to report and monitor the change. Especially to avoid the errors like `ERROR:root:b'{"error":"The following fields were not found in the project as real data fields: your_or_your_childs_3"}'`
 - The file sync is not supported currently. 
+- Pull updated record only.
 
 ### How to use 
 1. Create API token and endpoint
@@ -50,6 +51,7 @@
         2. participant IDs; 
         3. first_name, last_name & DOB.
         4. If can not find a match in local data, create a new CUIMC_ID incremented. 
+    ![workflow](./redcap_id_match_diagram.png)
     - Also pull R4 surveyQueueLink via API for each record and store in [r4_survey_queue_link]
     - set up crob job for daily pull `cron_job.sh`. An example is showed below.
         ```sh

@@ -95,15 +95,15 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
     empty_name_flag = (first_name == '' or  last_name == '' or date_of_birth == '')
 
     # patch 6/6 match by child and parent seperatedly.
-    first_child = r4_record['first_name'].strip().lower()
-    last_child = r4_record['last_name'].strip().lower()
-    dob_child = r4_record['date_of_birth'].strip().lower()
+    first_name_child = r4_record['first_name_child'].strip().lower()
+    last_name_child = r4_record['last_name_child'].strip().lower()
+    dob_child = r4_record['date_of_birth_child'].strip().lower()
     age_of_interest = r4_record['age'].strip().lower()
-    empty_name_flag_child = (first_child == '' or  last_child == '' or dob_child == '')
+    empty_name_flag_child = (first_name_child == '' or  last_name_child == '' or dob_child == '')
 
     if record_id in current_mapping.keys(): # repeated instrument record.
         cuimc_id = current_mapping[record_id] 
-        r4_yn = 1
+        r4_yn = None
     else:
         if local_data_df.shape[0] == 0: # an empty local database
             cuimc_id = cuimc_id_latest + 1
@@ -115,17 +115,16 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
                 cuimc_id = local_data_df[local_data_df['record_id']==record_id]['cuimc_id'].drop_duplicates().tolist()[0]
                 current_mapping[record_id] = cuimc_id
                 r4_yn = None
-            elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist(): # mapped by previously pulled participant_lab_id in local db.
+            elif participant_lab_id != "" and participant_lab_id in local_data_df['participant_lab_id'].tolist(): # mapped by previously pulled participant_lab_id in local db. (this should not happen)
                 cuimc_id = local_data_df[local_data_df['participant_lab_id']==participant_lab_id]['cuimc_id'].drop_duplicates().tolist()[0]
                 current_mapping[record_id] = cuimc_id
                 r4_yn = None
             elif not empty_name_flag: # a valid r4 record with non empty name and dob.
-                if age_of_interest > 18: # mapping for adult
+                if int(age_of_interest) > 18: # mapping for adult
                     subset_df = local_data_df
                     subset_df = subset_df[subset_df['first_local']==first_name]
                     subset_df = subset_df[subset_df['last_local']==last_name]
                     subset_df = subset_df[subset_df['dob']==date_of_birth]
-                    subset_df = subset_df[subset_df['age']==age_of_interest]
                     if subset_df.shape[0] > 0: # mapped by name & dob in local db.
                         cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
                         current_mapping[record_id] = cuimc_id
@@ -134,18 +133,14 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
                         cuimc_id = cuimc_id_latest + 1 
                         current_mapping[record_id] = cuimc_id
                         cuimc_id_latest = cuimc_id
-                    r4_yn = "1"
+                        r4_yn = "1"
                 else: # mapping for kid
                     if not empty_name_flag_child: # a valid r4 record with non empty name and dob for both parents and kid
                         subset_df = local_data_df
-                        subset_df = subset_df[subset_df['first_local']==first_name]
-                        subset_df = subset_df[subset_df['last_local']==last_name]
-                        subset_df = subset_df[subset_df['dob']==date_of_birth]
-                        subset_df = subset_df[subset_df['first_name_child']==first_child]
-                        subset_df = subset_df[subset_df['last_name_child']==last_child]
-                        subset_df = subset_df[subset_df['date_of_birth_child']==dob_child]
-                        subset_df = subset_df[subset_df['age']==age_of_interest]
-                        if subset_df.shape[0] > 0: # mapped by both name & dob in local db.
+                        subset_df = subset_df[subset_df['first_local']==first_name_child]
+                        subset_df = subset_df[subset_df['last_local']==last_name_child]
+                        subset_df = subset_df[subset_df['dob']==dob_child]
+                        if subset_df.shape[0] > 0: # mapped by child name & dob in local db. (This should not happen)
                             cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
                             current_mapping[record_id] = cuimc_id
                             r4_yn = None
@@ -157,6 +152,9 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
                     else:
                         cuimc_id = None
                         r4_yn = None
+            else:
+                cuimc_id = None
+                r4_yn = None
 
     return cuimc_id, cuimc_id_latest, r4_yn, current_mapping
 
@@ -195,6 +193,7 @@ def clean_record(r4_record):
         del r4_record['record_id']
         del r4_record['r4_yn']
         del r4_record['r4_survey_queue_link']
+        del r4_record['last_r4_pull']
     else:
         if r4_record['r4_yn'] is None:
             del r4_record['r4_yn']
@@ -231,7 +230,7 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
             logging.error(r.content)
             flag = flag + 1
 
-def update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest):
+def update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest, current_time):
     logging.info("update local redcap...")
     current_mapping = {}
     for r4_record in r4_data:
@@ -241,6 +240,7 @@ def update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, l
             r4_record['cuimc_id'] = str(cuimc_id)
             r4_record['r4_yn'] = r4_yn # new record indicator
             r4_record['r4_survey_queue_link'] = return_url
+            r4_record['last_r4_pull'] = current_time
             push_data_to_local(api_key_local,cu_local_endpoint,r4_record)
             
 if __name__ == "__main__":
@@ -254,7 +254,8 @@ if __name__ == "__main__":
     token_file = args.token
     
 
-    logging.basicConfig(filename=log_file, level=logging.INFO)
+    # logging.basicConfig(filename=log_file, level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     logging.info("Current Time =" +  dt_string)
@@ -264,5 +265,5 @@ if __name__ == "__main__":
     r4_data = export_data_from_redcap(api_key_r4,r4_api_endpoint)
     if r4_data != []:
         local_data_df, cuimc_id_latest = indexing_local_data(local_data)
-        update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest)
+        update_local(api_key_local,api_key_r4, cu_local_endpoint, r4_api_endpoint, local_data_df, r4_data, cuimc_id_latest, dt_string)
     
