@@ -49,8 +49,9 @@
     - Pull R4 data and match local data by 
         1. record_id in r4; (This can be assigned a record_id in a local record to enable a forced manual match.) 
         2. participant IDs; 
-        3. first_name, last_name & DOB.
-        4. If can not find a match in local data, create a new CUIMC_ID incremented. 
+        3. first_name, last_name & DOB if this is a adult patient and given the local record has no child portion filled in.
+        4. child_names & DOB if this is a child patient.
+        5. If can not find a match in local data, create a new CUIMC_ID incremented. 
     ![workflow](./redcap_id_match_diagram.png)
     - Also pull R4 surveyQueueLink via API for each record and store in [r4_survey_queue_link]
     - set up crob job for daily pull `cron_job.sh`. An example is showed below.
