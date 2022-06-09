@@ -122,6 +122,7 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
             elif not empty_name_flag: # a valid r4 record with non empty name and dob.
                 if int(age_of_interest) > 18: # mapping for adult
                     subset_df = local_data_df
+                    subset_df = subset_df[subset_df['child_first']==''] # patch 6/9 if there is a child name in local record assume this is for child recruitment.
                     subset_df = subset_df[subset_df['first_local']==first_name]
                     subset_df = subset_df[subset_df['last_local']==last_name]
                     subset_df = subset_df[subset_df['dob']==date_of_birth]
@@ -137,10 +138,10 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
                 else: # mapping for kid
                     if not empty_name_flag_child: # a valid r4 record with non empty name and dob for both parents and kid
                         subset_df = local_data_df
-                        subset_df = subset_df[subset_df['first_local']==first_name_child]
-                        subset_df = subset_df[subset_df['last_local']==last_name_child]
-                        subset_df = subset_df[subset_df['dob']==dob_child]
-                        if subset_df.shape[0] > 0: # mapped by child name & dob in local db. (This should not happen)
+                        subset_df = subset_df[subset_df['child_first']==first_name_child]
+                        subset_df = subset_df[subset_df['last_child']==last_name_child]
+                        subset_df = subset_df[subset_df['dob_child']==dob_child]
+                        if subset_df.shape[0] > 0: # mapped by child name & dob in local db. 
                             cuimc_id = subset_df['cuimc_id'].drop_duplicates().tolist()[0]
                             current_mapping[record_id] = cuimc_id
                             r4_yn = None
@@ -155,7 +156,8 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
             else:
                 cuimc_id = None
                 r4_yn = None
-
+    if cuimc_id is None:
+        logging.info('R4 record: ' + record_id + 'can not find or generate a local record!')
     return cuimc_id, cuimc_id_latest, r4_yn, current_mapping
 
 def indexing_local_data(local_data):
@@ -254,8 +256,8 @@ if __name__ == "__main__":
     token_file = args.token
     
 
-    # logging.basicConfig(filename=log_file, level=logging.INFO)
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(filename=log_file, level=logging.INFO)
+    # logging.basicConfig(level=logging.INFO)
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     logging.info("Current Time =" +  dt_string)
