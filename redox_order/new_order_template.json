@@ -1,0 +1,23 @@
+{
+    "Meta": {
+        "DataModel": "Order",
+        "EventType": "New",
+        "Destinations": [
+            {
+                "ID": "af394f14-b34a-464f-8d24-895f370af4c9",
+                "Name": "Redox EMR"
+            }
+        ]
+    },
+    "Patient": {
+        "Identifiers": [
+            {
+                "ID": "0000000001",
+                "IDType": "participant_lab_id"
+            }
+        ]
+    },
+    "Order": {
+        "ID": "12345678"       
+    }
+}
