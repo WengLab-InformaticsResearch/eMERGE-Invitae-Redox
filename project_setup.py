@@ -66,16 +66,27 @@ for i in ordered_form_names:
 with open('./test_meta.json','w') as f:
     json.dump(new_json,f)
 
-# update local data dictionary
-# IMPORTANT: need to re-arrange the 
 data = {
     'token': api_key_local,
-    'content': 'metadata',
+    'content': 'project',
     'format': 'json',
-    'returnFormat': 'json',
-    'data': json.dumps(new_json)
+    'returnFormat': 'json'
 }
 r = requests.post(cu_local_endpoint,data=data)
 print('HTTP Status: ' + str(r.status_code))
-print('HTTP Status: ' + r.content.decode('utf-8'))
+print(r.json())
+
+if 'clone' in r.json()['project_title']: # avoid mistakely update the project.
+    # update local data dictionary
+    # IMPORTANT: need to re-arrange the 
+    data = {
+        'token': api_key_local,
+        'content': 'metadata',
+        'format': 'json',
+        'returnFormat': 'json',
+        'data': json.dumps(new_json)
+    }
+    r = requests.post(cu_local_endpoint,data=data)
+    print('HTTP Status: ' + str(r.status_code))
+    print('HTTP Status: ' + r.content.decode('utf-8'))
 
