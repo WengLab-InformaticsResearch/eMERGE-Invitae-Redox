@@ -157,7 +157,7 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
                 cuimc_id = None
                 r4_yn = None
     if cuimc_id is None:
-        logging.info('R4 record: ' + record_id + 'can not find or generate a local record!')
+        logging.info('R4 record: ' + record_id + ' can not find or generate a local record!')
     return cuimc_id, cuimc_id_latest, r4_yn, current_mapping
 
 def indexing_local_data(local_data):
