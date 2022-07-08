@@ -83,13 +83,13 @@ class RedoxInvitaeAPI:
             response_json = response.json()
             if RedoxInvitaeAPI.check_response(response_json):
                 logger.error(f'Query order unsuccessful for {patient_id}.')
-                return False
+                return None
             else:
                 logger.info(f'Query order successful for {patient_id}')
-                return True
+                return response_json
         else:
             logger.error(f'Query order unsuccessful for {patient_id}. Response: {response.status_code} - {response.text}')
-            return False
+            return None
 
     @staticmethod
     def check_response(response):
