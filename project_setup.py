@@ -76,7 +76,7 @@ r = requests.post(cu_local_endpoint,data=data)
 print('HTTP Status: ' + str(r.status_code))
 print(r.json())
 
-if 'clone' in r.json()['project_title']: # avoid mistakely update the project.
+if 'clone' not in r.json()['project_title']: # avoid mistakely update the project.
     # update local data dictionary
     # IMPORTANT: need to re-arrange the 
     data = {
@@ -89,4 +89,5 @@ if 'clone' in r.json()['project_title']: # avoid mistakely update the project.
     r = requests.post(cu_local_endpoint,data=data)
     print('HTTP Status: ' + str(r.status_code))
     print('HTTP Status: ' + r.content.decode('utf-8'))
+    # HTTP Status: {"error":"This method cannot be used while the project is in Production status."}
 

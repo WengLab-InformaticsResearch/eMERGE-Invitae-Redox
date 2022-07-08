@@ -122,7 +122,9 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
             elif not empty_name_flag: # a valid r4 record with non empty name and dob.
                 if int(age_of_interest) > 18: # mapping for adult
                     subset_df = local_data_df
-                    subset_df = subset_df[subset_df['child_first']==''] # patch 6/9 if there is a child name in local record assume this is for child recruitment.
+                    # patch 6/9 if there is a child name in local record assume this is for child recruitment.
+                    # patch 7/8 require a legal name (not empty string, digit, '.')
+                    subset_df = subset_df[~subset_df['child_first'].str.upper().str.isupper()] 
                     subset_df = subset_df[subset_df['first_local']==first_name]
                     subset_df = subset_df[subset_df['last_local']==last_name]
                     subset_df = subset_df[subset_df['dob']==date_of_birth]
