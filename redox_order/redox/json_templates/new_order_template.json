@@ -7,17 +7,62 @@
                 "ID": "af394f14-b34a-464f-8d24-895f370af4c9",
                 "Name": "Redox EMR"
             }
-        ]
+        ],
+        "FacilityCode": "12345"
     },
     "Patient": {
         "Identifiers": [
             {
                 "ID": "0000000001",
-                "IDType": "participant_lab_id"
+                "IDType": "EPLID"
             }
-        ]
+        ],
+        "Demographics": {
+            "FirstName": "",
+            "LastName": "",
+            "DOB": "",
+            "Sex": "Male"
+        }
     },
     "Order": {
-        "ID": "12345678"       
+        "ID": "12345678",
+        "Status": "New",
+        "Code": "PR79882",
+        "Codeset": null,
+        "Provider": {
+            "NPI": "",
+            "FirstName": "",
+            "LastName": ""
+        },
+        "Priority": "Routine",
+        "ClinicalInfo": [
+           {
+              "Code": "partner_code",
+              "Codeset": null,
+              "Description": "Research study/partnership? If yes, provide code",
+              "Value": "EMERGE",
+              "Units": null,
+              "Abbreviation": null,
+              "Notes": []
+           },
+           {
+              "Code": "is_individual_affected",
+              "Codeset": null,
+              "Description": "Is the patient affected or symptomatic?",
+              "Value": null,
+              "Units": null,
+              "Abbreviation": null,
+              "Notes": []
+           },
+           {
+              "Code": "has_positive_family_history",
+              "Codeset": null,
+              "Description": "Family history of disease?",
+              "Value": null,
+              "Units": null,
+              "Abbreviation": null,
+              "Notes": []
+           }
+        ]
     }
 }
