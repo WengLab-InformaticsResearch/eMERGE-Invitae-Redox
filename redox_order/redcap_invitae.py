@@ -16,10 +16,11 @@ class Redcap:
     FIELD_RECORD_ID = 'record_id'
     FIELD_LAB_ID = 'participant_lab_id'
     # Participant Info
-    FIELD_DOB = 'date_of_birth'
-    FIELD_NAME_FIRST = 'first_name'
-    FIELD_NAME_MIDDLE = 'middle_name'
+    FIELD_DOB = 'participant_date_of_birth'
+    FIELD_NAME_FIRST = 'participant_first_name'
+    FIELD_NAME_MIDDLE = 'participant_middle_name'
     FIELD_NAME_LAST = 'last_name'
+    FIELD_SEX = 'sex_at_birth'
     # Invitae Order
     FIELD_ORDER_READY = 'invitae_order_ready'
     FIELD_ORDER_ID = 'invitae_order_id'
@@ -67,7 +68,8 @@ class Redcap:
         # Get all fields from Invitae Ordering instrument and record_id and participant_lab_id
         forms = [Redcap._FORM_INVITAE]
         fields = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
-                  Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_MIDDLE, Redcap.FIELD_NAME_LAST]
+                  Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
+                  Redcap.FIELD_DOB, Redcap.FIELD_SEX]
 
         participant_info = []
         records = self.project.export_records(fields=fields, forms=forms)
@@ -76,6 +78,8 @@ class Redcap:
                     record[Redcap.FIELD_ORDER_FORM_COMPLETE] == Redcap.FormComplete.COMPLETE.value and \
                     (record[Redcap.FIELD_ORDER_STATUS] == Redcap.OrderStatus.NOT_ORDERED.value or
                         not record[Redcap.FIELD_ORDER_STATUS]):
+                # Convert REDCap's sex values to the Redox value set
+                record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
                 # TODO: check which variables required when the child is the participant
                 participant_info.append({f:record[f] for f in fields})
 
@@ -94,12 +98,15 @@ class Redcap:
         # Get all fields from Invitae Ordering instrument and record_id and participant_lab_id
         forms = [Redcap._FORM_INVITAE]
         fields = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
-                  Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_MIDDLE, Redcap.FIELD_NAME_LAST]
+                  Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
+                  Redcap.FIELD_DOB, Redcap.FIELD_SEX]
 
         participant_info = []
         records = self.project.export_records(fields=fields, forms=forms)
         for record in records:
             if Redcap.OrderStatus.NOT_ORDERED.value < record[Redcap.FIELD_ORDER_STATUS] < Redcap.OrderStatus.COMPLETED.value:
+                # Convert REDCap's sex values to the Redox value set
+                record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
                 # TODO: check which variables required when the child is the participant
                 participant_info.append(record)
 
@@ -141,3 +148,17 @@ class Redcap:
                 logger.error(f'Unuccessful attempt to update local REDCap with order status: {record}. Response from update attempt: {response}')
 
         return True
+
+    @staticmethod
+    def map_redcap_sex_to_redox_sex(redcap_sex):
+        '''
+        Map REDCap values for sex to Redox
+        '''
+        map = {
+            '1': 'Female',
+            '2': 'Male',
+            '3': 'Other',  # REDCap: Intersex
+            '4': 'Unknown',  # REDCap: Prefer not to answer
+            '': 'Unknown'  # REDCap: (question not answered)
+        }
+        return map[redcap_sex]
