@@ -1,4 +1,3 @@
-from ast import Del
 from distutils.command.config import config
 import requests
 import json
