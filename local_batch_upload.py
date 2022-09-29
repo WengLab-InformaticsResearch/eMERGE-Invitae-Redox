@@ -149,7 +149,7 @@ if __name__ == "__main__":
     log_file = '/phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/batch_upload.log'
     token_file = '/phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/api_tokens.json'
     csv_file = '/phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/batch_upload/EMERGEIVcolumbiarecruitmentpro_ImportTemplate_2022-08-02-2022_UPLOADED.csv'
-    replicate_records_csv_file = '/phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/batch_upload/EMERGEIVcolumbiarecruitmentpro_ImportTemplate_2022-08-02-2022_UPLOADED_replicated.csv'
+    replicate_records_csv_file = '/phi_home/cl3720/phi/eMERGE/eIV-recruitement-support-redcap/batch_upload/EMERGEIVcolumbiarecruitmentpro_ImportTemplate_2022-08-02-2022_UPLOADED_failed.csv'
     # parser = argparse.ArgumentParser()
     # parser.add_argument('--log', type=str, required=True, help="file to write log",)    
     # parser.add_argument('--token', type=str, required=True, help='json file with api tokens')    
