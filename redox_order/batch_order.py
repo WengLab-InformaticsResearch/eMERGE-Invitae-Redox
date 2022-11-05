@@ -20,8 +20,10 @@ if __name__ == "__main__":
     logger.addHandler(fh)
     logger.addHandler(ch)
 
+    logger.info('Beging Invitae Redox batch script')
+
     # Read config file
-    parser = ConfigParser()
+    parser = ConfigParser(inline_comment_prefixes=['#'])
     parser.read('./redox-api.config')
     redcap_api_endpoint = parser.get('REDCAP', 'LOCAL_REDCAP_URL')
     redcap_api_token = parser.get('REDCAP', 'LOCAL_REDCAP_API_KEY')
@@ -50,25 +52,36 @@ if __name__ == "__main__":
     participant_info = redcap.pull_info_for_new_order()
     if not participant_info:
         logger.info('No new orders are needed')
+    else:
+        # Currently in development. Show what information has been collecetd and verify before continuing to send data out
+        logger.debug('The following participant data have been collected for placing new orders:')
+        logger.debug(participant_info)
+        if input('Enter "yes" to continue: ') != 'yes':
+            logger.debug('Exiting script prior to sending Redox orders.')
+            exit()
 
-    for p in participant_info:
-        success = redox.put_new_order(facility_code=facility_code,
-                                      patient_id=p[Redcap.FIELD_LAB_ID],
-                                      patient_name_first=p[Redcap.FIELD_NAME_FIRST],
-                                      patient_name_last=p[Redcap.FIELD_NAME_LAST],
-                                      patient_dob=p[Redcap.FIELD_DOB],
-                                      patient_sex=p[Redcap.FIELD_SEX],
-                                      provider_npi=provider_npi,
-                                      provider_name_first=provider_name_first,
-                                      provider_name_last=provider_name_last)
-        if success:
-            redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
-                                       order_status=Redcap.OrderStatus.SUBMITTED,
-                                       order_date=date.today().isoformat(),
-                                       order_id='COLUMBIA_ORDER_314159')
-        else:
-            # TODO: notify someone of order error
-            pass
+        for p in participant_info:
+            order_id = redcap.get_new_order_id()
+
+            success = redox.put_new_order(facility_code=facility_code,
+                                        patient_id=p[Redcap.FIELD_LAB_ID],
+                                        patient_name_first=p[Redcap.FIELD_NAME_FIRST],
+                                        patient_name_last=p[Redcap.FIELD_NAME_LAST],
+                                        patient_dob=p[Redcap.FIELD_DOB],
+                                        patient_sex=p[Redcap.FIELD_SEX],
+                                        provider_npi=provider_npi,
+                                        provider_name_first=provider_name_first,
+                                        provider_name_last=provider_name_last,
+                                        order_id=order_id)
+            if success:
+                redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
+                                        order_new=Redcap.YesNo.NO,
+                                        order_status=Redcap.OrderStatus.SUBMITTED,
+                                        order_date=date.today().isoformat(),
+                                        order_id=order_id)
+            else:
+                # TODO: notify someone of order error
+                pass
 
     # Give Invitae a little time before querying for order status
     if query_wait_sec > 0:
@@ -76,17 +89,27 @@ if __name__ == "__main__":
 
     # Check the status of pending orders
     participant_info = redcap.pull_info_for_query_order()
-    for p in participant_info:
-        response = redox.query_order(patient_id=p[Redcap.FIELD_LAB_ID])
-        if not response:
-            next
+    if not participant_info:
+        logger.info('No order statuses need to be checked')
+    else:
+        # Currently in development. Show what information has been collecetd and verify before continuing to send data out
+        logger.debug('The following participant data have been collected for checking order status:')
+        logger.debug(participant_info)
+        if input('Enter "yes" to continue: ') != 'yes':
+            logger.debug('Exiting script prior to checking Redox order statuses.')
+            exit()
 
-        current_status = p[Redcap.FIELD_ORDER_STATUS]
+        for p in participant_info:
+            response = redox.query_order(patient_id=p[Redcap.FIELD_LAB_ID])
+            if not response:
+                next
 
-        # Fake status update for testing
-        if current_status == '2':
-            new_status = Redcap.OrderStatus.RECEIVED
-        elif current_status == '3':
-            new_status =Redcap.OrderStatus.COMPLETED
-        redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
-                                   order_status=new_status)
+            current_status = p[Redcap.FIELD_ORDER_STATUS]
+
+            # Fake status update for testing
+            if current_status == '2':
+                new_status = Redcap.OrderStatus.RECEIVED
+            elif current_status == '3':
+                new_status =Redcap.OrderStatus.COMPLETED
+            redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
+                                    order_status=new_status)
