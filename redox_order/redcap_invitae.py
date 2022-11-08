@@ -90,7 +90,6 @@ class Redcap:
         for record in records:
             if record[Redcap.FIELD_ORDER_READY] == Redcap.YesNo.YES.value:
                 # Perform various other safeguard checks before placing the order
-                # TODO: provide some form of warning notification that this participant was not processed
                 if (record[Redcap.FIELD_ORDER_STATUS] != Redcap.OrderStatus.NOT_ORDERED.value
                         and record[Redcap.FIELD_ORDER_STATUS]):
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
@@ -138,7 +137,6 @@ class Redcap:
             if Redcap.OrderStatus.NOT_ORDERED.value < record[Redcap.FIELD_ORDER_STATUS] < Redcap.OrderStatus.COMPLETED.value:
                 # Convert REDCap's sex values to the Redox value set
                 record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
-                # TODO: check which variables required when the child is the participant
                 participant_info.append({f:record[f] for f in fields})
 
         # For testing, return the entire records

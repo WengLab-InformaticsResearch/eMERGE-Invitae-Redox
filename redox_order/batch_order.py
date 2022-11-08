@@ -5,9 +5,12 @@ from datetime import date
 
 from redcap_invitae import Redcap
 from redox import RedoxInvitaeAPI
+from emailer import Emailer
+from errorhandler import ErrorHandler
 
 if __name__ == "__main__":
     # Setup logging
+    error_handler = ErrorHandler(logging.WARNING)
     logger = logging.getLogger('redox_application')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('redox.log')
@@ -20,21 +23,33 @@ if __name__ == "__main__":
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-    logger.info('Beging Invitae Redox batch script')
+    logger.info('Begin Invitae Redox batch script')
 
     # Read config file
     parser = ConfigParser(inline_comment_prefixes=['#'])
     parser.read('./redox-api.config')
+    # REDCap
     redcap_api_endpoint = parser.get('REDCAP', 'LOCAL_REDCAP_URL')
     redcap_api_token = parser.get('REDCAP', 'LOCAL_REDCAP_API_KEY')
+    # Redox
     redox_api_base_url = parser.get('REDOX', 'BASE_URL')
     redox_api_key =  parser.get('REDOX', 'REDOX_API_KEY')
     redox_api_secret = parser.get('REDOX', 'REDOX_API_SECRET')
     query_wait_sec = parser.getint('REDOX', 'WAIT_BEFORE_ORDER_QUERY_SECONDS', fallback=0)
+    # Order
     facility_code = parser.get('ORDER', 'FACILITY_CODE')
     provider_npi = parser.get('ORDER', 'PROVIDER_NPI')
     provider_name_first = parser.get('ORDER', 'PROVIDER_NAME_FIRST')
     provider_name_last = parser.get('ORDER', 'PROVIDER_NAME_LAST')
+    # Email
+    email_host = parser.get('EMAIL', 'SMTP_HOST')
+    email_port = parser.get('EMAIL', 'SMTP_PORT')
+    email_from = parser.get('EMAIL', 'FROM_ADDR')
+    email_to = parser.get('EMAIL', 'TO_ADDRS')
+    email_to = [e.strip() for e in email_to.split(';') if e.strip()]  # split emails by ; and get rid of empty
+
+    # Emailer to notify dev of failures
+    emailer = Emailer(email_host, email_port, email_from, email_to)
 
     # Redcap configuration
     redcap = Redcap(redcap_api_endpoint, redcap_api_token)
@@ -42,10 +57,9 @@ if __name__ == "__main__":
     # Redox configuration and authentication
     redox = RedoxInvitaeAPI(redox_api_base_url, redox_api_key, redox_api_secret)
     if not redox.authenticate():
-        logger.error('Unable to authenticate with Redox. Exiting without processing any orders.')
-
-        # TODO: Notify developers of issue
-
+        msg = 'Unable to authenticate with Redox. Exiting without processing any orders.'
+        logger.error(msg)
+        emailer.sendmail('Invitae Redox API issue', msg)
         exit()
 
     # Place new orders with Invitae
@@ -79,9 +93,6 @@ if __name__ == "__main__":
                                         order_status=Redcap.OrderStatus.SUBMITTED,
                                         order_date=date.today().isoformat(),
                                         order_id=order_id)
-            else:
-                # TODO: notify someone of order error
-                pass
 
     # Give Invitae a little time before querying for order status
     if query_wait_sec > 0:
@@ -113,3 +124,6 @@ if __name__ == "__main__":
                 new_status =Redcap.OrderStatus.COMPLETED
             redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
                                     order_status=new_status)
+
+    if error_handler.fired:
+        emailer.sendmail('Invitae Redox API issue', 'An issue occurred in the Invitae Redox script. Please check the logs.')
