@@ -225,7 +225,7 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
     while(flag > 0 and flag < 5):
         r = requests.post(cu_local_endpoint,data=data)
         if r.status_code == 200:
-            logging.info('HTTP Status: ' + str(r.status_code))
+            logging.info('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + record_id)
             flag = 0
         else:
             logging.error('Error occured in importing data to ' + cu_local_endpoint)
