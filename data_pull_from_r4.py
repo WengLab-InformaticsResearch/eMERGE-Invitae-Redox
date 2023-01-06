@@ -1,4 +1,3 @@
-from ast import Del
 from distutils.command.config import config
 import requests
 import json
@@ -122,7 +121,9 @@ def add_cuimc_id(r4_record,local_data_df, cuimc_id_latest, current_mapping):
             elif not empty_name_flag: # a valid r4 record with non empty name and dob.
                 if int(age_of_interest) > 18: # mapping for adult
                     subset_df = local_data_df
-                    subset_df = subset_df[subset_df['child_first']==''] # patch 6/9 if there is a child name in local record assume this is for child recruitment.
+                    # patch 6/9 if there is a child name in local record assume this is for child recruitment.
+                    # patch 7/8 require a legal name (not empty string, digit, '.')
+                    subset_df = subset_df[~subset_df['child_first'].str.upper().str.isupper()] 
                     subset_df = subset_df[subset_df['first_local']==first_name]
                     subset_df = subset_df[subset_df['last_local']==last_name]
                     subset_df = subset_df[subset_df['dob']==date_of_birth]
@@ -224,7 +225,7 @@ def push_data_to_local(api_key_local, cu_local_endpoint, r4_record):
     while(flag > 0 and flag < 5):
         r = requests.post(cu_local_endpoint,data=data)
         if r.status_code == 200:
-            logging.info('HTTP Status: ' + str(r.status_code))
+            logging.info('HTTP Status: ' + str(r.status_code) + '. R4 record_id: ' + record_id)
             flag = 0
         else:
             logging.error('Error occured in importing data to ' + cu_local_endpoint)
