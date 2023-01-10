@@ -15,7 +15,7 @@ if __name__ == "__main__":
         # Setup logging
         error_handler = ErrorHandler(logging.WARNING)
         logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
         fh = logging.FileHandler('gira_cde.log')
         fh.setLevel(logging.INFO)
         ch = logging.StreamHandler()
@@ -341,8 +341,8 @@ if __name__ == "__main__":
                     RedcapCDE.FIELD_RECORD_ID: record_id
                 }
                 gira_cv_record = {
-                    # RedcapCDE.FIELD_R4_RECORD_ID: r4_record_id
-                    RedcapCDE.FIELD_RECORD_ID: record_id,
+                    RedcapCDE.FIELD_R4_RECORD_ID: r4_record_id,
+                    # RedcapCDE.FIELD_RECORD_ID: record_id,  # This is only used for testing purposes when the target project is a clone of our local project
                     R4GiraClinVar.FIELD_GIRA_CLINICAL_VARIABLES_COMPLETE: renums.Complete.COMPLETE.value
                 }
 
