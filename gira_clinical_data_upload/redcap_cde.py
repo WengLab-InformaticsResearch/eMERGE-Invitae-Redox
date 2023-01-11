@@ -266,8 +266,12 @@ class RedcapCDE(Project):
             # If MRN previously not found, only perform CDE if MRN has been updated or OMOP database updated
             elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND.value:
                 mrn_prev = r[RedcapCDE.FIELD_GIRA_CDE_MRN_QUERIED]
-                mrn = r[RedcapCDE.FIELD_MRN]
-                if mrn == mrn_prev:
+                mrn = r[RedcapCDE.FIELD_MRN]                    
+                if len(mrn.strip()) > 0 and mrn != mrn_prev:
+                    logger.debug("MRN has been updated. Perform CDE again for this participant")
+                    participant_info.append(r)
+                    continue
+                else:
                     logger.debug("Skipping participant, participant's MRN was not found previously, and no change in MRN.")
                     continue
 
