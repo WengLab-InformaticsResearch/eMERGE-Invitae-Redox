@@ -222,6 +222,13 @@ class RedcapCDE(Project):
                 logger.debug('Skipping unconsented / withdrawn participant')
                 continue
 
+            # If MRN or DOB are empty, skip this participant
+            dob = r[RedcapCDE.FIELD_DOB].strip()
+            mrn = r[RedcapCDE.FIELD_MRN].strip()
+            if not dob or not mrn:
+                logger.info("Participant's MRN or DOB not entered yet.")
+                continue
+
             # If CDE has never been run before, add this participant
             cde_status = r[RedcapCDE.FIELD_GIRA_CDE_STATUS]
             if not cde_status:
@@ -240,8 +247,7 @@ class RedcapCDE(Project):
                 participant_info.append(r)
                 continue
 
-            # For previous CDE statuses where DOB mismatched, proceed with CDE only if DOB updated or approved to
-            dob = r[RedcapCDE.FIELD_DOB]
+            # For previous CDE statuses where DOB mismatched, proceed with CDE only if DOB updated or approved to            
             dob_prev = r[RedcapCDE.FIELD_GIRA_CDE_DOB_QUERIED]
             if cde_status == RedcapCDE.GiraCdeStatus.BDMM_REVIEW_NEEDED.value:
                 if dob != dob_prev:
@@ -265,8 +271,7 @@ class RedcapCDE(Project):
                 continue
             # If MRN previously not found, only perform CDE if MRN has been updated or OMOP database updated
             elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND.value:
-                mrn_prev = r[RedcapCDE.FIELD_GIRA_CDE_MRN_QUERIED]
-                mrn = r[RedcapCDE.FIELD_MRN]                    
+                mrn_prev = r[RedcapCDE.FIELD_GIRA_CDE_MRN_QUERIED]                
                 if len(mrn.strip()) > 0 and mrn != mrn_prev:
                     logger.debug("MRN has been updated. Perform CDE again for this participant")
                     participant_info.append(r)
