@@ -24,11 +24,17 @@
             "Sex": "Male"
         }
     },
+    "Visit": {
+        "PatientClass": "Outpatient"
+    },
     "Order": {
         "ID": "12345678",
         "Status": "New",
-        "Code": "PR79882",
-        "Codeset": null,
+        "Procedure": {
+            "Code": "PR79882",
+            "Codeset": null,
+            "Description": "eMERGE panel"
+        },
         "Provider": {
             "NPI": "",
             "FirstName": "",
