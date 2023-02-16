@@ -8,7 +8,7 @@ from errorhandler import ErrorHandler
 from redcap_invitae import Redcap
 from redox import RedoxInvitaeAPI
 from emailer import Emailer
-from utils import convert_emerge_race_to_redox_race
+from utils import convert_emerge_race_to_redox_race, convert_emerge_race_to_invitae_ancestry
 
 if __name__ == "__main__":
     # Setup logging
@@ -83,13 +83,16 @@ if __name__ == "__main__":
             
             redox_race = convert_emerge_race_to_redox_race(participant_info)
 
+            invitae_ancestry = convert_emerge_race_to_invitae_ancestry(participant_info)
+
             success = redox.put_new_order(facility_code=facility_code,
                                         patient_id=p[Redcap.FIELD_LAB_ID],
                                         patient_name_first=p[Redcap.FIELD_NAME_FIRST],
                                         patient_name_last=p[Redcap.FIELD_NAME_LAST],
                                         patient_dob=p[Redcap.FIELD_DOB],
                                         patient_sex=p[Redcap.FIELD_SEX],
-                                        patient_race=redox_race,
+                                        patient_redox_race=redox_race,
+                                        patient_invitae_ancestry=invitae_ancestry,
                                         provider_npi=provider_npi,
                                         provider_name_first=provider_name_first,
                                         provider_name_last=provider_name_last,

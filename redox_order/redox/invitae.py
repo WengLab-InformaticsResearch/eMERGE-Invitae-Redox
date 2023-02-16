@@ -40,7 +40,8 @@ class RedoxInvitaeAPI:
             return False
 
     def put_new_order(self, facility_code,
-                      patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex, patient_race,
+                      patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex, 
+                      patient_redox_race, patient_invitae_ancestry,
                       provider_npi, provider_name_first, provider_name_last, order_id, test=False):
         logger.info(f'New order: {patient_id}')
 
