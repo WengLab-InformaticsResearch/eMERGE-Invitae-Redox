@@ -24,6 +24,7 @@ class Redcap:
     FIELD_NAME_LAST = 'last_name'
     FIELD_SEX = 'sex_at_birth'
     FIELD_AGE = 'age'
+    FIELD_RACE = 'race_at_enrollment'
     # Invitae Order
     FIELD_SAMPLE_REPLACE = 'sp_invitae_replace'
     FIELD_SAMPLE_RECEIVED = 'sp_invitae_yn'
@@ -80,7 +81,7 @@ class Redcap:
         forms = [Redcap._FORM_INVITAE_ORDER]
         fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
                        Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX]
+                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE]
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
         fields = fields_info + fields_requirements

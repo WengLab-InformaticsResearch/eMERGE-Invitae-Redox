@@ -3,10 +3,12 @@ from configparser import ConfigParser
 import time
 from datetime import date
 
+from errorhandler import ErrorHandler
+
 from redcap_invitae import Redcap
 from redox import RedoxInvitaeAPI
 from emailer import Emailer
-from errorhandler import ErrorHandler
+from utils import convert_emerge_race_to_redox_race, convert_emerge_race_to_invitae_ancestry
 
 if __name__ == "__main__":
     # Setup logging
@@ -28,6 +30,8 @@ if __name__ == "__main__":
     # Read config file
     parser = ConfigParser(inline_comment_prefixes=['#'])
     parser.read('./redox-api.config')
+    # Development environment configuraiton
+    development = parser.getboolean('GENERAL', 'DEVELOPMENT')
     # REDCap
     redcap_api_endpoint = parser.get('REDCAP', 'LOCAL_REDCAP_URL')
     redcap_api_token = parser.get('REDCAP', 'LOCAL_REDCAP_API_KEY')
@@ -76,6 +80,10 @@ if __name__ == "__main__":
 
         for p in participant_info:
             order_id = redcap.get_new_order_id()
+            
+            redox_race = convert_emerge_race_to_redox_race(participant_info)
+
+            invitae_ancestry = convert_emerge_race_to_invitae_ancestry(participant_info)
 
             success = redox.put_new_order(facility_code=facility_code,
                                         patient_id=p[Redcap.FIELD_LAB_ID],
@@ -83,10 +91,13 @@ if __name__ == "__main__":
                                         patient_name_last=p[Redcap.FIELD_NAME_LAST],
                                         patient_dob=p[Redcap.FIELD_DOB],
                                         patient_sex=p[Redcap.FIELD_SEX],
+                                        patient_redox_race=redox_race,
+                                        patient_invitae_ancestry=invitae_ancestry,
                                         provider_npi=provider_npi,
                                         provider_name_first=provider_name_first,
                                         provider_name_last=provider_name_last,
-                                        order_id=order_id)
+                                        order_id=order_id,
+                                        test=development)
             if success:
                 redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
                                         order_new=Redcap.YesNo.NO,
