@@ -48,15 +48,20 @@
               "Value": "EMERGE"
            },
            {
-              "Code": "is_ind_aff",
-              "Description": "Is the patient affected or symptomatic?",
-              "Value": null        
-           },
-           {
-              "Code": "has_fam_hist",
-              "Description": "Family history of disease?",
+              "Code": "prim_ind",
+              "Description": "Primary Indication",
               "Value": null
            },
+           {
+              "Code": "is_ind_aff",
+              "Description": "Is the patient affected or symptomatic?",
+              "Value": "No"
+           },           
+           {
+              "Code": "poss_hem_mel",
+              "Description": "Patient has hematological malignancy?",
+              "Value": "No"
+           },        
            {
               "Code": "attestation",
               "Description": "I agree to attestation at www.invitae.com/EMR",
