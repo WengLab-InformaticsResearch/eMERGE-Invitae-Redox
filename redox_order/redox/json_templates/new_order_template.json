@@ -47,7 +47,8 @@
             "Description": "eMERGE panel"
         },
         "Provider": {
-            "NPI": "1234567890",
+            "ID": "1234567890",
+            "IDType": "NPI",
             "FirstName": "John",
             "LastName": "Dorian"
         },
