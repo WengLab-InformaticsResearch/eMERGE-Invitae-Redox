@@ -1,4 +1,4 @@
-import logging
+import logging, logging.handlers
 from configparser import ConfigParser
 from datetime import date, datetime
 from pprint import pprint
@@ -16,8 +16,8 @@ if __name__ == "__main__":
         error_handler = ErrorHandler(logging.WARNING)
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler('gira_cde.log')
-        fh.setLevel(logging.INFO)
+        fh = logging.handlers.RotatingFileHandler('gira_cde.log', maxBytes=10000000, backupCount=10)
+        fh.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
