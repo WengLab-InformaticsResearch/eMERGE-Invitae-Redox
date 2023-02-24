@@ -21,48 +21,64 @@
             "FirstName": "",
             "LastName": "",
             "DOB": "",
-            "Sex": "Male"
+            "Sex": "",
+            "PhoneNumber": {
+                "Home": "+12223334444",
+                "Mobile": "+12223334444"
+            },
+            "Address": {
+                "StreetAddress": "12629 Riverside Drive",
+                "City": "San DiFrangeles",
+                "State": "CA",
+                "ZIP": "90210",
+                "Country": "US"
+            }
         }
+    },
+    "Visit": {
+        "PatientClass": "Outpatient"
     },
     "Order": {
         "ID": "12345678",
         "Status": "New",
-        "Code": "PR79882",
-        "Codeset": null,
+        "Procedure": {
+            "Code": "PR79882",
+            "Codeset": null,
+            "Description": "eMERGE panel"
+        },
         "Provider": {
-            "NPI": "",
-            "FirstName": "",
-            "LastName": ""
+            "ID": "1234567890",
+            "IDType": "NPI",
+            "FirstName": "John",
+            "LastName": "Dorian"
         },
         "Priority": "Routine",
         "ClinicalInfo": [
-           {
-              "Code": "partner_code",
-              "Codeset": null,
-              "Description": "Research study/partnership? If yes, provide code",
-              "Value": "EMERGE",
-              "Units": null,
-              "Abbreviation": null,
-              "Notes": []
-           },
-           {
-              "Code": "is_individual_affected",
-              "Codeset": null,
-              "Description": "Is the patient affected or symptomatic?",
-              "Value": null,
-              "Units": null,
-              "Abbreviation": null,
-              "Notes": []
-           },
-           {
-              "Code": "has_positive_family_history",
-              "Codeset": null,
-              "Description": "Family history of disease?",
-              "Value": null,
-              "Units": null,
-              "Abbreviation": null,
-              "Notes": []
-           }
+            {
+                "Code": "partner_code",
+                "Description": "Research study/partnership? If yes, provide code",
+                "Value": "EMERGE"
+            },
+            {
+                "Code": "prim_ind",
+                "Description": "Primary Indication",
+                "Value": null
+            },
+            {
+                "Code": "is_ind_aff",
+                "Description": "Is the patient affected or symptomatic?",
+                "Value": "No"
+            },           
+            {
+                "Code": "poss_hem_mel",
+                "Description": "Patient has hematological malignancy?",
+                "Value": "No"
+            },        
+            {
+                "Code": "attestation",
+                "Description": "I agree to attestation at www.invitae.com/EMR",
+                "Value": "Yes"
+            }
         ]
     }
 }

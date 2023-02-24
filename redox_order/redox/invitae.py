@@ -2,6 +2,7 @@ from urllib.parse import urljoin
 import requests
 import logging
 from importlib import resources
+from datetime import datetime
 
 from .model.order_new import Model as OrderNew
 from .model.order_query import Model as OrderQuery
@@ -38,19 +39,22 @@ class RedoxInvitaeAPI:
             logger.error(f'Failed to receive Redox access token. Response: {response.status_code} - {response.text}. ')
             return False
 
-    def put_new_order(self, facility_code,
-                      patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex,
-                      provider_npi, provider_name_first, provider_name_last, order_id):
+    def put_new_order(self,
+                      patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex, 
+                      patient_redox_race, patient_invitae_ancestry,
+                      order_id, test=False):
         logger.info(f'New order: {patient_id}')
 
         template = resources.read_text(json_templates, 'new_order_template.json')
-        order = OrderNew.parse_raw(template)
+        message = OrderNew.parse_raw(template)
+        datetime_iso = datetime.now().isoformat()
 
         # Fill in Meta
-        order.Meta.FacilityCode = facility_code
+        message.Meta.EventDateTime = datetime_iso
+        message.Meta.Test = test
 
         # Fill in Patient
-        patient = order.Patient
+        patient = message.Patient
         patient.Identifiers[0].ID = patient_id
         demogs = patient.Demographics
         demogs.FirstName = patient_name_first
@@ -58,20 +62,26 @@ class RedoxInvitaeAPI:
         demogs.DOB = patient_dob
         demogs.Sex = patient_sex
 
-        # Fill in Provider
-        provider = order.Order.Provider
-        provider.NPI = provider_npi
-        provider.FirstName = provider_name_first
-        provider.LastName = provider_name_last
-
         # Fill in Order
-        order.Order.ID = order_id
+        order = message.Order
+        order.ID = order_id
+        order.TransactionDateTime = datetime_iso
 
-        # TODO: Fill in ClinicalInfo if needed
+        # Fill in ClinicalInfo
+        clinical_info = order.ClinicalInfo
+        # primary indication
+
+        # patient ancestry
+        if patient_invitae_ancestry:
+            clinical_info.append({
+                "Code": "pat_anc",
+                "Description": "Patient Ancestry",
+                "Value": '|'.join(patient_invitae_ancestry)
+           })
 
         # Send new order
         url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
-        j = order.json(exclude_unset=True)
+        j = message.json(exclude_unset=True)
         logger.debug(j)
 
         if SEND_REDOX:

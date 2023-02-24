@@ -15,7 +15,7 @@ if __name__ == "__main__":
         # Setup logging
         error_handler = ErrorHandler(logging.WARNING)
         logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         fh = logging.FileHandler('gira_cde.log')
         fh.setLevel(logging.INFO)
         ch = logging.StreamHandler()
@@ -258,18 +258,18 @@ if __name__ == "__main__":
                 RedcapCDE.fill_missing_wheeze(cde_result)
                 wheeze_events = omop.wheeze_events(match.omop_person_id)                
                 if len(wheeze_events) >= 1:
-                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = wheeze_events[0].age
+                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = f'{wheeze_events[0].age:0.3f}'
                     if len(wheeze_events) >= 2:
-                        cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = wheeze_events[1].age
+                        cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = f'{wheeze_events[1].age:0.3f}'
                         cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 1
 
                 # Eczema
                 RedcapCDE.fill_missing_eczema(cde_result)
                 eczema_events = omop.eczema_events(match.omop_person_id)                
                 if len(eczema_events) >= 1:
-                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = eczema_events[0].age
+                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = f'{eczema_events[0].age:0.3f}'
                     if len(eczema_events) >= 2:
-                        cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = eczema_events[1].age
+                        cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = f'{eczema_events[1].age:0.3f}'
                         cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 1
 
                 msg = 'CDE complete'
