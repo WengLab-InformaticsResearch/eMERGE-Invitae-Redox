@@ -17,7 +17,7 @@ if __name__ == "__main__":
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
         fh = logging.handlers.RotatingFileHandler('gira_cde.log', maxBytes=10000000, backupCount=10)
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(logging.INFO)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
                 if not match:
                     # No matching MRNs were found.
-                    if cde_status == RedcapCDE.GiraCDEStatus.MRN_NOT_FOUND_PROCEED.value:
+                    if cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND_PROCEED.value:
                         # Approved to proceed filling in participant's clinical variables with missing values
                         msg = 'MRN was not found in OMOP database, but approved to proceed with missing values'
                         logger.info(msg)
