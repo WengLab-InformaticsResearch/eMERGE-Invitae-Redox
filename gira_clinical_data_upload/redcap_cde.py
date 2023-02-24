@@ -134,6 +134,7 @@ class RedcapCDE(Project):
         BDMM_PROCEED = '4'
         # Other
         MRN_NOT_FOUND = '5'
+        MRN_NOT_FOUND_PROCEED = '6'
 
     class GiraReviewStatus(Enum):
         NOT_NEEDED = '1'
@@ -269,7 +270,7 @@ class RedcapCDE(Project):
                 logger.debug('DOB mismatched, but approved to proceed with CDE')
                 participant_info.append(r)
                 continue
-            # If MRN previously not found, only perform CDE if MRN has been updated or OMOP database updated
+            # If MRN previously not found, only perform CDE if MRN has been updated, OMOP database updated, or recruiter selected to proceed
             elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND.value:
                 mrn_prev = r[RedcapCDE.FIELD_GIRA_CDE_MRN_QUERIED]                
                 if len(mrn.strip()) > 0 and mrn != mrn_prev:
@@ -279,6 +280,10 @@ class RedcapCDE(Project):
                 else:
                     logger.debug("Skipping participant, participant's MRN was not found previously, and no change in MRN.")
                     continue
+            elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND_PROCEED:
+                logger.debug("MRN or OMOP data not found, but approved to proceed with CDE using missing values")
+                participant_info.append(r)
+                continue
 
             # We shouldn't get here. Do not process this participant
             logger.error(f'Unhandled condition for partcipant {r[RedcapCDE.FIELD_RECORD_ID]}')
@@ -292,7 +297,13 @@ class RedcapCDE(Project):
         if type(records) is dict:
             records = [records]
 
-        return self.import_records(records)
+        update_result = self.import_records(records)
+        if update_result['count'] != 1:
+            logger.error(f'Local CDE not updated correctly for records:\n\t{records}.\n\tUpdate result:\n\t{update_result}')
+        else:
+            logger.info('Local GIRA CDE instrument updated')
+        
+        return update_result
 
     def get_participants_to_upload_r4(self):
         '''
@@ -341,3 +352,52 @@ class RedcapCDE(Project):
                              f'review status: {review_status}; completion status: {completion_status}')
 
         return participant_info
+
+    @staticmethod
+    def fill_missing_sbp(cde_result):
+        cde_result[RedcapCDE.FIELD_SBP_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_SBP_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_SBP_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+        return
+
+    @staticmethod
+    def fill_missing_dbp(cde_result):
+        cde_result[RedcapCDE.FIELD_DBP_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_DBP_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_DBP_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+
+    @staticmethod
+    def fill_missing_hdl(cde_result):
+        cde_result[RedcapCDE.FIELD_HDL_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_HDL_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_HDL_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+    
+    @staticmethod
+    def fill_missing_cho(cde_result):
+        cde_result[RedcapCDE.FIELD_TOTALCHOLEST_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_TOTALCHOLEST_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_TOTALCHOLEST_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+
+    @staticmethod
+    def fill_missing_tri(cde_result):
+        cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+    
+    @staticmethod
+    def fill_missing_a1c(cde_result):
+        cde_result[RedcapCDE.FIELD_A1C_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
+        cde_result[RedcapCDE.FIELD_A1C_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
+        cde_result[RedcapCDE.FIELD_A1C_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+
+    @staticmethod
+    def fill_missing_wheeze(cde_result):
+        cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 0
+        cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
+        cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_WHEEZE_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
+
+    @staticmethod
+    def fill_missing_eczema(cde_result):
+        cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 0
+        cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
+        cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE

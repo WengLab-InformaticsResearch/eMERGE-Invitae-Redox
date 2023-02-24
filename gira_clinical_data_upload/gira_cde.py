@@ -118,12 +118,31 @@ if __name__ == "__main__":
 
                 if not match:
                     # No matching MRNs were found.
-                    msg = 'MRN was not found in OMOP database'
-                    logger.info(msg)
-                    cde_script_message += f'{msg}\n'
-                    cde_result[RedcapCDE.FIELD_GIRA_CDE_SCRIPT_OUTPUT] = cde_script_message
-                    cde_result[RedcapCDE.FIELD_GIRA_CDE_STATUS] = RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND.value
-                    redcap_cde.update_gira_cde(cde_result)
+                    if cde_status == RedcapCDE.GiraCDEStatus.MRN_NOT_FOUND_PROCEED.value:
+                        # Approved to proceed filling in participant's clinical variables with missing values
+                        msg = 'MRN was not found in OMOP database, but approved to proceed with missing values'
+                        logger.info(msg)
+                        cde_script_message += f'{msg}\n'
+                        cde_result[RedcapCDE.FIELD_GIRA_CDE_SCRIPT_OUTPUT] = cde_script_message
+                        RedcapCDE.fill_missing_sbp(cde_result)
+                        RedcapCDE.fill_missing_dbp(cde_result)
+                        RedcapCDE.fill_missing_hdl(cde_result)
+                        RedcapCDE.fill_missing_cho(cde_result)
+                        RedcapCDE.fill_missing_tri(cde_result)
+                        RedcapCDE.fill_missing_a1c(cde_result)
+                        RedcapCDE.fill_missing_wheeze(cde_result)
+                        RedcapCDE.fill_missing_eczema(cde_result)
+                        cde_result[RedcapCDE.FIELD_GIRA_CDE_STATUS] = RedcapCDE.GiraCdeStatus.COMPLETED.value                        
+                        cde_result[RedcapCDE.FIELD_GIRA_CDE_REVIEW_STATUS] = RedcapCDE.GiraReviewStatus.NOT_NEEDED.value                        
+                        cde_result[RedcapCDE.FIELD_GIRA_CLINICAL_VARIABLES_LOCAL_COMPLETE] = renums.Complete.INCOMPLETE.value                        
+                        redcap_cde.update_gira_cde(cde_result)                                     
+                    else:                        
+                        msg = 'MRN was not found in OMOP database'
+                        logger.info(msg)
+                        cde_script_message += f'{msg}\n'
+                        cde_result[RedcapCDE.FIELD_GIRA_CDE_SCRIPT_OUTPUT] = cde_script_message
+                        cde_result[RedcapCDE.FIELD_GIRA_CDE_STATUS] = RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND.value
+                        redcap_cde.update_gira_cde(cde_result)
                     continue
 
                 # Check DOB
@@ -172,9 +191,7 @@ if __name__ == "__main__":
                     if sbp_value < 60 or sbp_value > 240:
                         needs_review.append('SBP [60-240]')
                 else:
-                    cde_result[RedcapCDE.FIELD_SBP_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_SBP_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_SBP_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_sbp(cde_result)
 
                 # diastolic blood pressure
                 if dbp is not None:
@@ -187,9 +204,7 @@ if __name__ == "__main__":
                     if dbp_value < 0 or (sbp is not None and (dbp_value >= sbp_value)):
                         needs_review.append('DBP [0-SBP]')
                 else:
-                    cde_result[RedcapCDE.FIELD_DBP_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_DBP_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_DBP_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_dbp(cde_result)
 
                 # HDL
                 if hdl is not None:
@@ -202,9 +217,7 @@ if __name__ == "__main__":
                     if hdl_value < 5 or hdl_value > 200:
                         needs_review.append('HDL [5-200]')
                 else:
-                    cde_result[RedcapCDE.FIELD_HDL_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_HDL_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_HDL_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_hdl(cde_result)
 
                 # Total Cholesterol
                 if cho is not None:
@@ -217,9 +230,7 @@ if __name__ == "__main__":
                     if cho_value < 50 or cho_value > 1000:
                         needs_review.append('total cholesterol [50-1000]')
                 else:
-                    cde_result[RedcapCDE.FIELD_TOTALCHOLEST_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_TOTALCHOLEST_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_TOTALCHOLEST_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_cho(cde_result)
 
                 # Triglyceride
                 if tri is not None:
@@ -228,9 +239,7 @@ if __name__ == "__main__":
                     cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_MEASUREMENT_CONCEPT_ID_LOCAL] = str(tri.measurement_concept_id)
                     cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_VALUE_MOST_RECENT_LOCAL] = tri.value_as_number
                 else:
-                    cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_TRIGLYCERIDE_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_tri(cde_result)
 
                 # A1c
                 if a1c is not None:
@@ -243,39 +252,25 @@ if __name__ == "__main__":
                     if a1c_value < 2 or a1c_value > 20:
                         needs_review.append('a1c [2-20]')
                 else:
-                    cde_result[RedcapCDE.FIELD_A1C_LAB_NAME_LOCAL] = RedcapCDE.MISSING_CONCEPT_NAME
-                    cde_result[RedcapCDE.FIELD_A1C_DATE_AT_EVENT_LOCAL] = RedcapCDE.MISSING_DATE
-                    cde_result[RedcapCDE.FIELD_A1C_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
+                    RedcapCDE.fill_missing_a1c(cde_result)
 
-                # Wheeze 1
-                wheeze_events = omop.wheeze_events(match.omop_person_id)
-                cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 0
-                event_age = RedcapCDE.MISSING_VALUE
+                # Wheeze
+                RedcapCDE.fill_missing_wheeze(cde_result)
+                wheeze_events = omop.wheeze_events(match.omop_person_id)                
                 if len(wheeze_events) >= 1:
-                    event_age = wheeze_events[0].age
-                cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = event_age
+                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = wheeze_events[0].age
+                    if len(wheeze_events) >= 2:
+                        cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = wheeze_events[1].age
+                        cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 1
 
-                # Wheeze 2
-                event_age = RedcapCDE.MISSING_VALUE
-                if len(wheeze_events) >= 2:
-                    event_age = wheeze_events[1].age
-                    cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 1
-                cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_WHEEZE_EVENT_LOCAL] = event_age
-
-                # Eczema 1
-                eczema_events = omop.eczema_events(match.omop_person_id)
-                cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 0
-                event_age = RedcapCDE.MISSING_VALUE
+                # Eczema
+                RedcapCDE.fill_missing_eczema(cde_result)
+                eczema_events = omop.eczema_events(match.omop_person_id)                
                 if len(eczema_events) >= 1:
-                    event_age = eczema_events[0].age
-                cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = event_age
-
-                # Eczema 2
-                event_age = RedcapCDE.MISSING_VALUE
-                if len(eczema_events) >= 2:
-                    event_age = eczema_events[1]
-                    cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 1
-                cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = event_age
+                    cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = eczema_events[0].age
+                    if len(eczema_events) >= 2:
+                        cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = eczema_events[1].age
+                        cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 1
 
                 msg = 'CDE complete'
                 logger.info(msg)
@@ -300,12 +295,7 @@ if __name__ == "__main__":
                 cde_result[RedcapCDE.FIELD_GIRA_CDE_STATUS] = RedcapCDE.GiraCdeStatus.COMPLETED.value
                 cde_result[RedcapCDE.FIELD_GIRA_CDE_SCRIPT_OUTPUT] = cde_script_message
                 logger.debug(cde_result)
-                update_result = redcap_cde.update_gira_cde(cde_result)
-
-                if update_result['count'] != 1:
-                    logger.error(f'Local CDE not updated correctly for participant {record_id}. Update result: {update_result}')
-                else:
-                    logger.info('Local GIRA CDE instrument updated')
+                redcap_cde.update_gira_cde(cde_result)
 
             logger.info('Finished CDE')
 
