@@ -17,7 +17,7 @@ if __name__ == "__main__":
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
         fh = logging.handlers.RotatingFileHandler('gira_cde.log', maxBytes=10000000, backupCount=10)
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
@@ -32,6 +32,8 @@ if __name__ == "__main__":
         # Read config file
         parser = ConfigParser(inline_comment_prefixes=['#'])
         parser.read('./config.ini')
+        # Development environment configuraiton
+        DEVELOPMENT = parser.getboolean('GENERAL', 'DEVELOPMENT')
         # REDCap
         redcap_api_endpoint = parser.get('REDCAP', 'LOCAL_REDCAP_URL')
         redcap_api_token = parser.get('REDCAP', 'LOCAL_REDCAP_API_KEY')
@@ -58,7 +60,7 @@ if __name__ == "__main__":
         r4 = R4GiraClinVar(r4_api_endpoint, r4_api_token)
 
         # While we're developing the script, force double check of which projects we're working on
-        CHECK_BEFORE_RUNNING = False
+        CHECK_BEFORE_RUNNING = DEVELOPMENT
         redcap_project_title = redcap_cde.export_project_info()['project_title']
         if CHECK_BEFORE_RUNNING and (input(f'Working on redcap project: {redcap_project_title}. Enter the project title to continue:\n') != redcap_project_title):
             print('Exiting')
@@ -124,14 +126,10 @@ if __name__ == "__main__":
                         logger.info(msg)
                         cde_script_message += f'{msg}\n'
                         cde_result[RedcapCDE.FIELD_GIRA_CDE_SCRIPT_OUTPUT] = cde_script_message
-                        RedcapCDE.fill_missing_sbp(cde_result)
-                        RedcapCDE.fill_missing_dbp(cde_result)
-                        RedcapCDE.fill_missing_hdl(cde_result)
-                        RedcapCDE.fill_missing_cho(cde_result)
-                        RedcapCDE.fill_missing_tri(cde_result)
-                        RedcapCDE.fill_missing_a1c(cde_result)
-                        RedcapCDE.fill_missing_wheeze(cde_result)
-                        RedcapCDE.fill_missing_eczema(cde_result)
+                        cde_result[RedcapCDE.FIELD_EHR_PARTICIPANT_FIRST_NAME_LOCAL] = p[RedcapCDE.FIELD_NAME_FIRST]
+                        cde_result[RedcapCDE.FIELD_EHR_PARTICIPANT_LAST_NAME_LOCAL] = p[RedcapCDE.FIELD_NAME_LAST]
+                        cde_result[RedcapCDE.FIELD_EHR_DATE_OF_BIRTH_LOCAL] = RedcapCDE.MISSING_DATE
+                        RedcapCDE.fill_missing_values(cde_result)
                         cde_result[RedcapCDE.FIELD_GIRA_CDE_STATUS] = RedcapCDE.GiraCdeStatus.COMPLETED.value                        
                         cde_result[RedcapCDE.FIELD_GIRA_CDE_REVIEW_STATUS] = RedcapCDE.GiraReviewStatus.NOT_NEEDED.value                        
                         cde_result[RedcapCDE.FIELD_GIRA_CLINICAL_VARIABLES_LOCAL_COMPLETE] = renums.Complete.INCOMPLETE.value                        
@@ -332,9 +330,11 @@ if __name__ == "__main__":
                 }
                 gira_cv_record = {
                     RedcapCDE.FIELD_R4_RECORD_ID: r4_record_id,
-                    # RedcapCDE.FIELD_RECORD_ID: record_id,  # This is only used for testing purposes when the target project is a clone of our local project
                     R4GiraClinVar.FIELD_GIRA_CLINICAL_VARIABLES_COMPLETE: renums.Complete.COMPLETE.value
                 }
+                if DEVELOPMENT:
+                    # In dev environment, using redcap project clone instead of R4, which uses cuimc_id as record_id
+                    gira_cv_record[RedcapCDE.FIELD_RECORD_ID] = record_id
 
                 # Copy over all data fields in GIRA Clinical Variables Instrument
                 # All data fields have a copy in the GIRA Clinical Variables local instrument with a "_local" suffix appended

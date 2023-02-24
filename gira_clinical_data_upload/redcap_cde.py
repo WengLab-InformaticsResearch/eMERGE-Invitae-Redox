@@ -280,7 +280,7 @@ class RedcapCDE(Project):
                 else:
                     logger.debug("Skipping participant, participant's MRN was not found previously, and no change in MRN.")
                     continue
-            elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND_PROCEED:
+            elif cde_status == RedcapCDE.GiraCdeStatus.MRN_NOT_FOUND_PROCEED.value:
                 logger.debug("MRN or OMOP data not found, but approved to proceed with CDE using missing values")
                 participant_info.append(r)
                 continue
@@ -391,6 +391,11 @@ class RedcapCDE(Project):
         cde_result[RedcapCDE.FIELD_A1C_VALUE_MOST_RECENT_LOCAL] = RedcapCDE.MISSING_VALUE
 
     @staticmethod
+    def fill_missing_allergy(cde_result):
+        cde_result[RedcapCDE.FIELD_COUNT_POSITIVE_ALLERGY_LOCAL] = RedcapCDE.MISSING_VALUE
+        cde_result[RedcapCDE.FIELD_ALLERGY_TEST_FLAG_LOCAL] = 0
+
+    @staticmethod
     def fill_missing_wheeze(cde_result):
         cde_result[RedcapCDE.FIELD_WHEEZING_FLAG_LOCAL] = 0
         cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_WHEEZE_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
@@ -401,3 +406,15 @@ class RedcapCDE(Project):
         cde_result[RedcapCDE.FIELD_ECZEMA_FLAG_LOCAL] = 0
         cde_result[RedcapCDE.FIELD_AGE_AT_FIRST_ECZEMA_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
         cde_result[RedcapCDE.FIELD_AGE_AT_SECOND_ECZEMA_EVENT_LOCAL] = RedcapCDE.MISSING_VALUE
+
+    @staticmethod
+    def fill_missing_values(cde_result):
+        RedcapCDE.fill_missing_sbp(cde_result)
+        RedcapCDE.fill_missing_dbp(cde_result)
+        RedcapCDE.fill_missing_hdl(cde_result)
+        RedcapCDE.fill_missing_cho(cde_result)
+        RedcapCDE.fill_missing_tri(cde_result)
+        RedcapCDE.fill_missing_a1c(cde_result)
+        RedcapCDE.fill_missing_allergy(cde_result)
+        RedcapCDE.fill_missing_wheeze(cde_result)
+        RedcapCDE.fill_missing_eczema(cde_result)
