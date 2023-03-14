@@ -219,17 +219,3 @@ class Redcap:
                 logger.error(f'Unuccessful attempt to update local REDCap with order status: {record}. Response from update attempt: {response}')
 
         return True
-
-    @staticmethod
-    def map_redcap_sex_to_redox_sex(redcap_sex):
-        '''
-        Map REDCap values for sex to Redox
-        '''
-        map = {
-            '1': 'Female',
-            '2': 'Male',
-            '3': 'Other',  # REDCap: Intersex
-            '4': 'Unknown',  # REDCap: Prefer not to answer
-            '': 'Unknown'  # REDCap: (question not answered)
-        }
-        return map[redcap_sex]

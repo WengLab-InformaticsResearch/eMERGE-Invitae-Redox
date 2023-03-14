@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 def convert_emerge_race_to_redox_race(participant_data):
     """ Converts eMERGE race_at_enrollment to Redox Patient.Demographics.race values
 
@@ -87,6 +89,73 @@ def convert_emerge_race_to_invitae_ancestry(participant_data):
         ancestries.append(invitae_ashkenazi)
 
     return ancestries
+
+
+def map_redcap_sex_to_redox_sex(redcap_sex):
+    """ Map REDCap values for sex to Redox defined values
+
+    "Intersex" is mapped to "Other"
+
+    Params
+    ------
+    redcap_sex: (string) REDCap raw data
+
+    Returns
+    -------
+    (string) Redox sex value
+    """
+    map = {
+        '1': 'Female',
+        '2': 'Male',
+        '3': 'Other',  # REDCap: Intersex
+        '4': 'Unknown',  # REDCap: Prefer not to answer
+        '': 'Unknown'  # REDCap: (question not answered)
+    }
+    return map[redcap_sex]
+
+
+def get_invitae_primary_indication(record):
+    """ Choose a primary indication for Invitae API order
+
+    Looks as participant's personal health history response in baseline survey. Chooses the closest
+    primary indication based on participant's current and past health history, ignoring conditions
+    the participant indicates they are at risk for. For healthy participants, "Other" is chosen. 
+
+    Params
+    ------
+    record: Dict of participant's records containing values from personal health history checkboxes, e.g., 
+                      'prostate_cancer___1': '1'
+                      Handles both raw (e.g., '0', '1') and label (e.g., 'Unchecked', 'Checked') formats
+
+    Returns
+    -------
+    (String) First relevant primary indication. For healthy participants or no match found, return 'Other'
+    """
+    mappings = OrderedDict([
+        ('prostate_cancer', 'Prostate Cancer'),
+        ('pancreatic_cancer', 'Pancreatic Cancer'),
+        ('breast_cancer', 'Other Cancer'),
+        ('ovarian_cancer', 'Other Cancer'),
+        ('colorectal_cancer', 'Other Cancer'),
+        ('atrial_fibrillation', 'Cardiology: Arrhythmia'),
+        ('coronary_heart_disease', 'Cardiology: Other'),
+        ('heart_failure', 'Cardiology: Other'),
+    ])    
+    checkbox_suffix = '___1'
+    past_modifier = '_2'
+    checkbox_positive_values = ['1', 'checked']
+    
+    for emerge_variable_base, invitae_indication in mappings.items():
+        # check if this participant has the condition: 
+        # 1) currently 
+        if record[emerge_variable_base + checkbox_suffix].lower() in checkbox_positive_values:
+            return invitae_indication
+        # 2) past
+        if record[emerge_variable_base + past_modifier + checkbox_suffix].lower() in checkbox_positive_values:
+            return invitae_indication
+        
+    # Use 'Other' for all other scenarios
+    return 'Other'
 
 
 # testing
