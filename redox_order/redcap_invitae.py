@@ -8,7 +8,7 @@ import re
 import requests
 from redcap import Project
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger(__name__)
 
 class Redcap:
     _FORM_INVITAE_ORDER = 'specimen_reminders'
@@ -123,7 +123,8 @@ class Redcap:
         forms = [Redcap._FORM_INVITAE_ORDER]
         fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
                        Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE]
+                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE] + 
+                       FIELDS_BPHH_CURRENT + FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
         fields = fields_info + fields_requirements
@@ -151,8 +152,7 @@ class Redcap:
                                    'but the participant age was under 18.')
                     continue
                 else:
-                    # Convert REDCap's sex values to the Redox value set
-                    record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
+                    # Add participant to list of participants for ordering
                     participant_info.append({f:record[f] for f in fields_info})
 
         return participant_info

@@ -58,17 +58,7 @@
                 "Code": "partner_code",
                 "Description": "Research study/partnership? If yes, provide code",
                 "Value": "EMERGE"
-            },
-            {
-                "Code": "prim_ind",
-                "Description": "Primary Indication",
-                "Value": null
-            },
-            {
-                "Code": "is_ind_aff",
-                "Description": "Is the patient affected or symptomatic?",
-                "Value": "No"
-            },           
+            },            
             {
                 "Code": "poss_hem_mel",
                 "Description": "Patient has hematological malignancy?",

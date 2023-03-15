@@ -233,7 +233,7 @@ def generate_family_history(metree):
 
     Returns
     -------
-    (String) Written description of family history.
+    tuple: ((str) Written description of family history, (int) # Family members (excluding self))
     """
     history = list()
 
@@ -243,6 +243,7 @@ def generate_family_history(metree):
         raise TypeError
 
     # Create description for each person
+    family_count = 0
     for record in metree:
         # Create description for each condition
         conditions = list()
@@ -269,9 +270,18 @@ def generate_family_history(metree):
                 conditions_str = mh
             else:
                 conditions_str = 'no conditions listed'
-        history.append(f"{record['relation']}: {conditions_str}.")
 
-    return ' '.join(history)
+        # Identify each person only by their relation
+        rel = record['relation']
+        history.append(f"{rel}: {conditions_str}.")
+        
+        # Count number of family members 
+        if rel != 'SELF':
+            family_count += 1
+
+    # Merge strings across all people
+    history_str = ' '.join(history)
+    return history_str, family_count
 
 
 # testing

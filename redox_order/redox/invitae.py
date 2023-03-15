@@ -42,7 +42,10 @@ class RedoxInvitaeAPI:
     def put_new_order(self,
                       patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex, 
                       patient_redox_race, patient_invitae_ancestry,
-                      order_id, test=False):
+                      order_id, 
+                      prim_ind, is_ind_aff, pat_hist,
+                      has_fam_hist, fam_hist,
+                      test=False):
         logger.info(f'New order: {patient_id}')
 
         template = resources.read_text(json_templates, 'new_order_template.json')
@@ -70,7 +73,37 @@ class RedoxInvitaeAPI:
         # Fill in ClinicalInfo
         clinical_info = order.ClinicalInfo
         # primary indication
-
+        clinical_info.append({
+            "Code": "prim_ind",
+            "Description": "Primary Indication",
+            "Value": prim_ind
+        })
+        # individual affected or symptomatic
+        clinical_info.append({
+            "Code": "is_ind_aff",
+            "Description": "Is the patient affected or symptomatic?",
+            "Value": is_ind_aff
+        })
+        # patient history
+        if patient_history:
+            clinical_info.append({
+                "Code": "pat_hist",
+                "Description": "Describe patient history, incl. age of diagnosis",
+                "Value": pat_hist
+           })
+        # has family history
+        clinical_info.append({
+            "Code": "has_fam_hist",
+            "Description": "Family history of disease?",
+            "Value": has_fam_hist
+        })
+        # family history
+        if patient_invitae_ancestry:
+            clinical_info.append({
+                "Code": "fam_hist",
+                "Description": "Describe family history, incl. age(s) of diagnosis",
+                "Value": fam_hist
+           })
         # patient ancestry
         if patient_invitae_ancestry:
             clinical_info.append({

@@ -6,9 +6,17 @@ from datetime import date
 from errorhandler import ErrorHandler
 
 from redcap_invitae import Redcap
+from R4 import R4
 from redox import RedoxInvitaeAPI
 from emailer import Emailer
-from utils import convert_emerge_race_to_redox_race, convert_emerge_race_to_invitae_ancestry
+from utils import (
+    convert_emerge_race_to_redox_race, 
+    convert_emerge_race_to_invitae_ancestry, 
+    map_redcap_sex_to_redox_sex, 
+    get_invitae_primary_indication, 
+    describe_patient_history, 
+    generate_family_history
+    )
 
 if __name__ == "__main__":
     # Setup logging
@@ -35,6 +43,9 @@ if __name__ == "__main__":
     # REDCap
     redcap_api_endpoint = parser.get('REDCAP', 'LOCAL_REDCAP_URL')
     redcap_api_token = parser.get('REDCAP', 'LOCAL_REDCAP_API_KEY')
+    # R4
+    r4_api_endpoint = parser.get('R4', 'R4_URL')
+    r4_api_token = parser.get('R4', 'R4_API_KEY')    
     # Redox
     redox_api_base_url = parser.get('REDOX', 'BASE_URL')
     redox_api_key =  parser.get('REDOX', 'REDOX_API_KEY')
@@ -58,6 +69,9 @@ if __name__ == "__main__":
     # Redcap configuration
     redcap = Redcap(redcap_api_endpoint, redcap_api_token)
 
+    # R4 configuration
+    r4 = R4(r4_api_endpoint, r4_api_token)
+
     # Redox configuration and authentication
     redox = RedoxInvitaeAPI(redox_api_base_url, redox_api_key, redox_api_secret)
     if not redox.authenticate():
@@ -80,22 +94,41 @@ if __name__ == "__main__":
 
         for p in participant_info:
             order_id = redcap.get_new_order_id()
+            r4_record_id = p[Redcap.FIELD_RECORD_ID]
             
+            # Map sex, race, and ancestry data from eMERGE to Redox / Invitae values
+            sex = map_redcap_sex_to_redox_sex(participant_info[Redcap.FIELD_SEX])
             redox_race = convert_emerge_race_to_redox_race(participant_info)
-
             invitae_ancestry = convert_emerge_race_to_invitae_ancestry(participant_info)
+
+            # Invitae AOE questions get primary indication and description of health history from baseline survey data
+            primary_indication = get_invitae_primary_indication(participant_info)
+            patient_history = describe_patient_history(participant_info)
+            # Mark patient as affected / symptomatic when patient history is not empty
+            affected_symptomatic = 'Yes' if patient_history else 'No'
+
+            # Get family health history from MeTree
+            # Get MeTree JSON from R4
+            metree = r4.get_metree_json(r4_record_id)
+            family_history, family_count = generate_family_history(metree)
+            has_family_history = 'Yes' if family_count > 0 else 'No'
 
             success = redox.put_new_order(patient_id=p[Redcap.FIELD_LAB_ID],
                                         patient_name_first=p[Redcap.FIELD_NAME_FIRST],
                                         patient_name_last=p[Redcap.FIELD_NAME_LAST],
                                         patient_dob=p[Redcap.FIELD_DOB],
-                                        patient_sex=p[Redcap.FIELD_SEX],
+                                        patient_sex=sex,
                                         patient_redox_race=redox_race,
                                         patient_invitae_ancestry=invitae_ancestry,
                                         order_id=order_id,
+                                        prim_ind=primary_indication, 
+                                        is_ind_aff=affected_symptomatic, 
+                                        pat_hist=patient_history,
+                                        has_fam_hist=has_family_history, 
+                                        fam_hist=family_history,
                                         test=development)
             if success:
-                redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
+                redcap.update_order_status(record_id=r4_record_id,
                                         order_new=Redcap.YesNo.NO,
                                         order_status=Redcap.OrderStatus.SUBMITTED,
                                         order_date=date.today().isoformat(),
