@@ -13,7 +13,7 @@ from utils import convert_emerge_race_to_redox_race, convert_emerge_race_to_invi
 if __name__ == "__main__":
     # Setup logging
     error_handler = ErrorHandler(logging.WARNING)
-    logger = logging.getLogger('redox_application')
+    logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('redox.log')
     fh.setLevel(logging.INFO)

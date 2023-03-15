@@ -4,7 +4,7 @@ import logging
 
 from redcap_invitae import Redcap
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger(__name__)
 
 
 CHECKBOX_POSITIVE_VALUES = ['1', 'checked']

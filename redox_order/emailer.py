@@ -7,7 +7,7 @@ _MESSAGE_FORMAT = """Subject: {subject}
 {body}
 """
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger(__name__)
 
 class Emailer():
     def __init__(self, host='localhost', port=25, from_addr=None, to_addrs=None):

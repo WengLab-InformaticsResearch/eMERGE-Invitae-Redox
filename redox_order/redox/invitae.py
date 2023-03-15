@@ -11,7 +11,7 @@ from . import json_templates
 
 SEND_REDOX = False
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger('__name__')
 
 class RedoxInvitaeAPI:
     ENDPOINT_AUTH = 'auth/authenticate'

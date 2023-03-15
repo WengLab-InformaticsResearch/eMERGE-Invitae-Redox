@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from redcap_invitae import Redcap
 
 # Setup logging
-logger = logging.getLogger('redox_testing')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 fh = logging.FileHandler('redox_testing.log')
 fh.setLevel(logging.DEBUG)
