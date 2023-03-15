@@ -34,6 +34,45 @@ class Redcap:
     FIELD_ORDER_STATUS = 'sp_invitae_redox_order_status'
     FIELD_ORDER_FORM_COMPLETE = 'sp_invitae_ordering_complete'
 
+    # Baseline Survey: Personal Health History checkbox fields
+    FIELD_BPHH_HYPERTENSION = 'high_blood_pressure_hypert'
+    FIELD_BPHH_HYPERLIPID = 'high_cholesterol_hyperlipi'
+    FIELD_BPHH_T1DM = 'type_1_diabetes'
+    FIELD_BPHH_T2DM = 'type_2_diabetes'
+    FIELD_BPHH_KD = 'kidney_disease'
+    FIELD_BPHH_ASTHMA = 'asthma'
+    FIELD_BPHH_OBESITY = 'obesity'
+    FIELD_BPHH_SLEEPAPNEA = 'sleep_apnea'
+    FIELD_BPHH_CHD = 'coronary_heart_disease'
+    FIELD_BPHH_HF = 'heart_failure'
+    FIELD_BPHH_AFIB = 'atrial_fibrillation'
+    FIELD_BPHH_BRCA = 'breast_cancer'
+    FIELD_BPHH_OVCA = 'ovarian_cancer'
+    FIELD_BPHH_PRCA = 'prostate_cancer'
+    FIELD_BPHH_PACA = 'pancreatic_cancer'
+    FIELD_BPHH_COCA = 'colorectal_cancer'
+    FIELDS_BPHH_CURRENT = [
+        FIELD_BPHH_HYPERTENSION,
+        FIELD_BPHH_HYPERLIPID,
+        FIELD_BPHH_T1DM,
+        FIELD_BPHH_T2DM,
+        FIELD_BPHH_KD,
+        FIELD_BPHH_ASTHMA,
+        FIELD_BPHH_OBESITY,
+        FIELD_BPHH_SLEEPAPNEA,
+        FIELD_BPHH_CHD,
+        FIELD_BPHH_HF,
+        FIELD_BPHH_AFIB,
+        FIELD_BPHH_BRCA,
+        FIELD_BPHH_OVCA,
+        FIELD_BPHH_PRCA,
+        FIELD_BPHH_PACA,
+        FIELD_BPHH_COCA
+    ]
+    FIELDS_BPHH_PAST = [f'{x}_2' for x in FIELDS_BPHH_CURRENT]
+    FIELDS_BPHH_RISK = [f'{x}_3' for x in FIELDS_BPHH_CURRENT]
+    FIELDS_BPHH = FIELDS_BPHH_CURRENT + FIELDS_BPHH_PAST + FIELDS_BPHH_RISK
+
     class YesNo(Enum):
         NO = '0'
         YES  = '1'

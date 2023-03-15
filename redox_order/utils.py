@@ -1,5 +1,11 @@
 from collections import OrderedDict
 
+from redcap_invitae import Redcap
+
+
+CHECKBOX_POSITIVE_VALUES = ['1', 'checked']
+
+
 def convert_emerge_race_to_redox_race(participant_data):
     """ Converts eMERGE race_at_enrollment to Redox Patient.Demographics.race values
 
@@ -124,8 +130,8 @@ def get_invitae_primary_indication(record):
     Params
     ------
     record: Dict of participant's records containing values from personal health history checkboxes, e.g., 
-                      'prostate_cancer___1': '1'
-                      Handles both raw (e.g., '0', '1') and label (e.g., 'Unchecked', 'Checked') formats
+            'prostate_cancer___1': '1'
+            Handles both raw (e.g., '0', '1') and label (e.g., 'Unchecked', 'Checked') formats
 
     Returns
     -------
@@ -143,19 +149,73 @@ def get_invitae_primary_indication(record):
     ])    
     checkbox_suffix = '___1'
     past_modifier = '_2'
-    checkbox_positive_values = ['1', 'checked']
     
     for emerge_variable_base, invitae_indication in mappings.items():
         # check if this participant has the condition: 
         # 1) currently 
-        if record[emerge_variable_base + checkbox_suffix].lower() in checkbox_positive_values:
+        if record[emerge_variable_base + checkbox_suffix].lower() in CHECKBOX_POSITIVE_VALUES:
             return invitae_indication
         # 2) past
-        if record[emerge_variable_base + past_modifier + checkbox_suffix].lower() in checkbox_positive_values:
+        if record[emerge_variable_base + past_modifier + checkbox_suffix].lower() in CHECKBOX_POSITIVE_VALUES:
             return invitae_indication
         
     # Use 'Other' for all other scenarios
     return 'Other'
+
+
+def describe_patient_history(record):
+    """ Creates a description of patient history for Invitae Order
+
+    Looks as participant's personal health history response in baseline survey and creates a written description
+
+    Params
+    ------
+    record: Dict of participant's records containing values from personal health history checkboxes, e.g., 
+            'prostate_cancer___1': '1'
+            Handles both raw (e.g., '0', '1') and label (e.g., 'Unchecked', 'Checked') formats
+
+    Returns
+    -------
+    (String) Written description of current and past conditions.
+    """
+    mappings = {
+        Redcap.FIELD_BPHH_HYPERTENSION: 'hypertension',
+        Redcap.FIELD_BPHH_HYPERLIPID: 'hypercholesterolemia',
+        Redcap.FIELD_BPHH_T1DM: 'type 1 diabetes',
+        Redcap.FIELD_BPHH_T2DM: 'type 2 diabetes',
+        Redcap.FIELD_BPHH_KD: 'weak or failing kidneys or kidney disease',
+        Redcap.FIELD_BPHH_ASTHMA: 'asthma',
+        Redcap.FIELD_BPHH_OBESITY: 'obesity',
+        Redcap.FIELD_BPHH_SLEEPAPNEA: 'sleep apnea',
+        Redcap.FIELD_BPHH_CHD: 'coronary heart disease',
+        Redcap.FIELD_BPHH_HF: 'heart failure',
+        Redcap.FIELD_BPHH_AFIB: 'atrial fibrillation',
+        Redcap.FIELD_BPHH_BRCA: 'breast cancer',
+        Redcap.FIELD_BPHH_OVCA: 'ovarian cancer',
+        Redcap.FIELD_BPHH_PRCA: 'prostate cancer',
+        Redcap.FIELD_BPHH_PACA: 'pancreatic cancer',
+        Redcap.FIELD_BPHH_COCA: 'colorectal cancer'
+    }
+    checkbox_suffix = '___1'
+    past_modifier = '_2'
+    
+    current_conditions = list()
+    past_conditions = list()
+    for emerge_variable_base, description in mappings.items():
+        # check if this participant has the condition: 
+        # 1) currently 
+        if record[emerge_variable_base + checkbox_suffix].lower() in CHECKBOX_POSITIVE_VALUES:
+            current_conditions.append(description)
+        # 2) past
+        if record[emerge_variable_base + past_modifier + checkbox_suffix].lower() in CHECKBOX_POSITIVE_VALUES:
+            past_conditions.append(description)
+        
+    description = ''
+    if current_conditions:
+        description += f"Current conditions: {', '.join(current_conditions)}. "
+    if past_conditions:
+        description += f"Past conditions: {', '.join(past_conditions)}."
+    return description    
 
 
 # testing
@@ -225,3 +285,33 @@ if __name__ == "__main__":
         d[f'race_at_enrollment___{i}'] = '1'
         a = convert_emerge_race_to_invitae_ancestry(d)
         print(f'{i}: {a}')
+
+    print('################ test get_invitae_primary_indication ################')    
+    d_template = {(x+'___1'):'0' for x in Redcap.FIELDS_BPHH}
+    for f in Redcap.FIELDS_BPHH:
+        d = d_template.copy()
+        d[f+'___1'] = '1'
+        x = get_invitae_primary_indication(d)
+        print(f'{f}: {x}')
+
+    print('################ test describe_patient_history with individual conditions ################')    
+    d_template = {(x+'___1'):'0' for x in Redcap.FIELDS_BPHH}
+    for f in Redcap.FIELDS_BPHH:
+        d = d_template.copy()
+        d[f+'___1'] = '1'
+        x = describe_patient_history(d)
+        print(f'{f}: {x}')
+
+    print('################ test describe_patient_history with random selection of conditinos ################')    
+    d_template = {(x+'___1'):'0' for x in Redcap.FIELDS_BPHH}
+    n = len(Redcap.FIELDS_BPHH)
+    import random
+    for i in range(10):
+        d = d_template.copy()
+        n_conditions = random.randint(1, 10)
+        sample = random.sample(range(n), n_conditions)
+        fields = [Redcap.FIELDS_BPHH[i]+'___1' for i in sample]
+        for f in fields:            
+            d[f] = '1'            
+        x = describe_patient_history(d)
+        print(f'fields: {fields}\ndescription: {x}\n--------------\n')
