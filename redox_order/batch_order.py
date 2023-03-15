@@ -134,36 +134,40 @@ if __name__ == "__main__":
                                         order_date=date.today().isoformat(),
                                         order_id=order_id)
 
-    # Give Invitae a little time before querying for order status
-    if query_wait_sec > 0:
-        time.sleep(query_wait_sec)
+    ##################################################################################
+    # Invitae currently does not support order status checks. Code below commented out
+    ################################################################################## 
 
-    # Check the status of pending orders
-    participant_info = redcap.pull_info_for_query_order()
-    if not participant_info:
-        logger.info('No order statuses need to be checked')
-    else:
-        # Currently in development. Show what information has been collecetd and verify before continuing to send data out
-        logger.debug('The following participant data have been collected for checking order status:')
-        logger.debug(participant_info)
-        if input('Enter "yes" to continue: ') != 'yes':
-            logger.debug('Exiting script prior to checking Redox order statuses.')
-            exit()
+    # # Give Invitae a little time before querying for order status
+    # if query_wait_sec > 0:
+    #     time.sleep(query_wait_sec)
 
-        for p in participant_info:
-            response = redox.query_order(patient_id=p[Redcap.FIELD_LAB_ID])
-            if not response:
-                next
+    # # Check the status of pending orders
+    # participant_info = redcap.pull_info_for_query_order()
+    # if not participant_info:
+    #     logger.info('No order statuses need to be checked')
+    # else:
+    #     # Currently in development. Show what information has been collecetd and verify before continuing to send data out
+    #     logger.debug('The following participant data have been collected for checking order status:')
+    #     logger.debug(participant_info)
+    #     if input('Enter "yes" to continue: ') != 'yes':
+    #         logger.debug('Exiting script prior to checking Redox order statuses.')
+    #         exit()
 
-            current_status = p[Redcap.FIELD_ORDER_STATUS]
+    #     for p in participant_info:
+    #         response = redox.query_order(patient_id=p[Redcap.FIELD_LAB_ID])
+    #         if not response:
+    #             next
 
-            # Fake status update for testing
-            if current_status == '2':
-                new_status = Redcap.OrderStatus.RECEIVED
-            elif current_status == '3':
-                new_status =Redcap.OrderStatus.COMPLETED
-            redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
-                                    order_status=new_status)
+    #         current_status = p[Redcap.FIELD_ORDER_STATUS]
+
+    #         # Fake status update for testing
+    #         if current_status == '2':
+    #             new_status = Redcap.OrderStatus.RECEIVED
+    #         elif current_status == '3':
+    #             new_status =Redcap.OrderStatus.COMPLETED
+    #         redcap.update_order_status(record_id=p[Redcap.FIELD_RECORD_ID],
+    #                                 order_status=new_status)
 
     if error_handler.fired:
         emailer.sendmail('Invitae Redox API issue', 'An issue occurred in the Invitae Redox script. Please check the logs.')
