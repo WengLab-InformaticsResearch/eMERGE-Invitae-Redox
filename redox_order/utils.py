@@ -1,6 +1,10 @@
 from collections import OrderedDict
+import json
+import logging
 
 from redcap_invitae import Redcap
+
+logger = logging.getLogger('redox_application')
 
 
 CHECKBOX_POSITIVE_VALUES = ['1', 'checked']
@@ -216,6 +220,55 @@ def describe_patient_history(record):
     if past_conditions:
         description += f"Past conditions: {', '.join(past_conditions)}."
     return description    
+
+
+def generate_family_history(metree):
+    """ Creates a description of family history for Invitae Order
+
+    Looks as participant's MeTree JSON data and generates text description of family history
+
+    Params
+    ------
+    metree: MeTree data. If metree passed in as string, will try to load JSON data. Otherwise, expect list of dicts.
+
+    Returns
+    -------
+    (String) Written description of family history.
+    """
+    history = list()
+
+    if type(metree) is str:
+        metree = json.loads(metree)
+    elif type(metree) is not list:
+        raise TypeError
+
+    # Create description for each person
+    for record in metree:
+        rel = record['relation']
+        if rel is None or rel == 'SELF':
+            # Don't include participant's info in family history
+            continue
+
+        # Create description for each condition
+        conditions = list()
+        for condition in record['conditions']:
+            cstr = condition['id']
+            age = condition['age']
+            if age:
+                cstr += f' (age {str(age)})'
+            conditions.append(cstr)
+
+        # Create summary of conditions
+        if conditions:
+            conditions_str = '; '.join(conditions)
+        else:
+            if record['medicalHistory'] == 'healthy':
+                conditions_str = 'healthy'
+            else:
+                conditions_str = 'no conditions'
+        history.append(f'{rel}: {conditions_str}.')
+
+    return ' '.join(history)
 
 
 # testing

@@ -73,6 +73,9 @@ class Redcap:
     FIELDS_BPHH_RISK = [f'{x}_3' for x in FIELDS_BPHH_CURRENT]
     FIELDS_BPHH = FIELDS_BPHH_CURRENT + FIELDS_BPHH_PAST + FIELDS_BPHH_RISK
 
+    # MeTree
+    FIELD_METREE_JSON = 'metree_json'
+
     class YesNo(Enum):
         NO = '0'
         YES  = '1'
