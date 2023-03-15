@@ -123,8 +123,8 @@ class Redcap:
         forms = [Redcap._FORM_INVITAE_ORDER]
         fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
                        Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE] + 
-                       FIELDS_BPHH_CURRENT + FIELDS_BPHH_PAST
+                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE] + \
+                       Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
         fields = fields_info + fields_requirements

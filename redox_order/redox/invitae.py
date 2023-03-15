@@ -112,12 +112,13 @@ class RedoxInvitaeAPI:
                 "Value": '|'.join(patient_invitae_ancestry)
            })
 
-        # Send new order
-        url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+        # Create the JSON message        
         j = message.json(exclude_unset=True)
         logger.debug(j)
 
         if SEND_REDOX:
+            # Send new order        
+            url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
             response = requests.post(url,
                                     headers={
                                         'Content-Type': 'application/json',

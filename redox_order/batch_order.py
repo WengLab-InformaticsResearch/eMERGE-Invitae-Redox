@@ -6,7 +6,7 @@ from datetime import date
 from errorhandler import ErrorHandler
 
 from redcap_invitae import Redcap
-from R4 import R4
+from r4 import R4
 from redox import RedoxInvitaeAPI
 from emailer import Emailer
 from utils import (
@@ -51,11 +51,6 @@ if __name__ == "__main__":
     redox_api_key =  parser.get('REDOX', 'REDOX_API_KEY')
     redox_api_secret = parser.get('REDOX', 'REDOX_API_SECRET')
     query_wait_sec = parser.getint('REDOX', 'WAIT_BEFORE_ORDER_QUERY_SECONDS', fallback=0)
-    # Order
-    facility_code = parser.get('ORDER', 'FACILITY_CODE')
-    provider_npi = parser.get('ORDER', 'PROVIDER_NPI')
-    provider_name_first = parser.get('ORDER', 'PROVIDER_NAME_FIRST')
-    provider_name_last = parser.get('ORDER', 'PROVIDER_NAME_LAST')
     # Email
     email_host = parser.get('EMAIL', 'SMTP_HOST')
     email_port = parser.get('EMAIL', 'SMTP_PORT')
@@ -71,6 +66,16 @@ if __name__ == "__main__":
 
     # R4 configuration
     r4 = R4(r4_api_endpoint, r4_api_token)
+
+    # While we're developing the script, force double check of which projects we're working on
+    CHECK_BEFORE_RUNNING = development
+    redcap_project_title = redcap.project.export_project_info()['project_title']
+    r4_project_title = r4.export_project_info()['project_title']
+    if CHECK_BEFORE_RUNNING:
+        msg = f'Working on redcap project: {redcap_project_title} and R4 project: {r4_project_title}. Enter the "YeS" to continue:\n'
+        if input(msg) != "YeS":
+            print('Exiting')
+            exit()    
 
     # Redox configuration and authentication
     redox = RedoxInvitaeAPI(redox_api_base_url, redox_api_key, redox_api_secret)
