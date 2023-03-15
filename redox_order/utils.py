@@ -244,15 +244,15 @@ def generate_family_history(metree):
 
     # Create description for each person
     for record in metree:
-        rel = record['relation']
-        if rel is None or rel == 'SELF':
-            # Don't include participant's info in family history
-            continue
-
         # Create description for each condition
         conditions = list()
         for condition in record['conditions']:
             cstr = condition['id']
+            # If the condition id is "other" and meta.other has info, use that
+            if cstr == 'other':
+                other = condition['meta'].get('other', '')
+                if other:
+                    cstr = other
             age = condition['age']
             if age:
                 cstr += f' (age {str(age)})'
@@ -262,11 +262,14 @@ def generate_family_history(metree):
         if conditions:
             conditions_str = '; '.join(conditions)
         else:
-            if record['medicalHistory'] == 'healthy':
-                conditions_str = 'healthy'
+            # If medicalHistory is not empty, use that as the summary. 
+            # It may be things like "healthy" or "unknown"
+            mh = record['medicalHistory']
+            if mh:                
+                conditions_str = mh
             else:
-                conditions_str = 'no conditions'
-        history.append(f'{rel}: {conditions_str}.')
+                conditions_str = 'no conditions listed'
+        history.append(f"{record['relation']}: {conditions_str}.")
 
     return ' '.join(history)
 
