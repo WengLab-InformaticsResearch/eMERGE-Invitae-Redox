@@ -21,10 +21,10 @@ from utils import (
 if __name__ == "__main__":
     # Setup logging
     error_handler = ErrorHandler(logging.WARNING)
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('redox.log')
-    fh.setLevel(logging.INFO)
+    fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
