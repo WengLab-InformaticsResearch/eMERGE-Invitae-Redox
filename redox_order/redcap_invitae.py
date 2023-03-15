@@ -28,11 +28,12 @@ class Redcap:
     # Invitae Order
     FIELD_SAMPLE_REPLACE = 'sp_invitae_replace'
     FIELD_SAMPLE_RECEIVED = 'sp_invitae_yn'
-    FIELD_ORDER_READY = 'sp_invitae_redox_order'
-    FIELD_ORDER_ID = 'sp_invitae_redox_order_id'
-    FIELD_ORDER_DATE = 'sp_invitae_redox_order_date'
-    FIELD_ORDER_STATUS = 'sp_invitae_redox_order_status'
-    FIELD_ORDER_FORM_COMPLETE = 'sp_invitae_ordering_complete'
+    # Redox Invitae
+    FIELD_ORDER_READY = 'invitae_redox_order'
+    FIELD_ORDER_ID = 'invitae_redox_order_id'
+    FIELD_ORDER_DATE = 'invitae_redox_order_date'
+    FIELD_ORDER_STATUS = 'invitae_redox_order_status'
+    FIELD_ORDER_FORM_COMPLETE = 'invitae_ordering_complete'
 
     # Baseline Survey: Personal Health History checkbox fields
     FIELD_BPHH_HYPERTENSION = 'high_blood_pressure_hypert'
@@ -83,8 +84,8 @@ class Redcap:
     class OrderStatus(Enum):
         NOT_ORDERED = '1'
         SUBMITTED = '2'
-        RECEIVED = '3'
-        COMPLETED = '4'
+        # RECEIVED = '3'
+        # COMPLETED = '4'
 
     class FormComplete(Enum):
         INCOMPLETE = '0'
@@ -134,12 +135,12 @@ class Redcap:
         for record in records:
             if record[Redcap.FIELD_ORDER_READY] == Redcap.YesNo.YES.value:
                 # Perform various other safeguard checks before placing the order
-                if (record[Redcap.FIELD_ORDER_STATUS] != Redcap.OrderStatus.NOT_ORDERED.value
-                        and record[Redcap.FIELD_ORDER_STATUS]):
-                    logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
-                                   'but the order status must be "Not ordered yet".')
-                    continue
-                elif record[Redcap.FIELD_SAMPLE_RECEIVED] != Redcap.YesNo.YES.value:
+                # if (record[Redcap.FIELD_ORDER_STATUS] != Redcap.OrderStatus.NOT_ORDERED.value
+                #         and record[Redcap.FIELD_ORDER_STATUS]):
+                #     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
+                #                    'but the order status must be "Not ordered yet".')
+                #     continue
+                if record[Redcap.FIELD_SAMPLE_RECEIVED] != Redcap.YesNo.YES.value:
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
                                    'but the sample has not been received.')
                     continue
@@ -153,7 +154,7 @@ class Redcap:
                     continue
                 else:
                     # Add participant to list of participants for ordering
-                    participant_info.append({f:record[f] for f in fields_info})
+                    participant_info.append(record)
 
         return participant_info
 
@@ -180,7 +181,7 @@ class Redcap:
             if Redcap.OrderStatus.NOT_ORDERED.value < record[Redcap.FIELD_ORDER_STATUS] < Redcap.OrderStatus.COMPLETED.value:
                 # Convert REDCap's sex values to the Redox value set
                 record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
-                participant_info.append({f:record[f] for f in fields})
+                participant_info.append(record)
 
         # For testing, return the entire records
         return participant_info

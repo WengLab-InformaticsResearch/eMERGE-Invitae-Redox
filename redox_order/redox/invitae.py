@@ -85,7 +85,7 @@ class RedoxInvitaeAPI:
             "Value": is_ind_aff
         })
         # patient history
-        if patient_history:
+        if pat_hist:
             clinical_info.append({
                 "Code": "pat_hist",
                 "Description": "Describe patient history, incl. age of diagnosis",
@@ -98,7 +98,7 @@ class RedoxInvitaeAPI:
             "Value": has_fam_hist
         })
         # family history
-        if patient_invitae_ancestry:
+        if fam_hist:
             clinical_info.append({
                 "Code": "fam_hist",
                 "Description": "Describe family history, incl. age(s) of diagnosis",

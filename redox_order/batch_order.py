@@ -102,21 +102,25 @@ if __name__ == "__main__":
             r4_record_id = p[Redcap.FIELD_RECORD_ID]
             
             # Map sex, race, and ancestry data from eMERGE to Redox / Invitae values
-            sex = map_redcap_sex_to_redox_sex(participant_info[Redcap.FIELD_SEX])
-            redox_race = convert_emerge_race_to_redox_race(participant_info)
-            invitae_ancestry = convert_emerge_race_to_invitae_ancestry(participant_info)
+            sex = map_redcap_sex_to_redox_sex(p[Redcap.FIELD_SEX])
+            redox_race = convert_emerge_race_to_redox_race(p)
+            invitae_ancestry = convert_emerge_race_to_invitae_ancestry(p)
 
             # Invitae AOE questions get primary indication and description of health history from baseline survey data
-            primary_indication = get_invitae_primary_indication(participant_info)
-            patient_history = describe_patient_history(participant_info)
+            primary_indication = get_invitae_primary_indication(p)
+            patient_history = describe_patient_history(p)
             # Mark patient as affected / symptomatic when patient history is not empty
             affected_symptomatic = 'Yes' if patient_history else 'No'
 
             # Get family health history from MeTree
             # Get MeTree JSON from R4
             metree = r4.get_metree_json(r4_record_id)
-            family_history, family_count = generate_family_history(metree)
-            has_family_history = 'Yes' if family_count > 0 else 'No'
+            if metree:
+                family_history, family_count = generate_family_history(metree)
+                has_family_history = 'Yes' if family_count > 0 else 'No'
+            else:
+                has_family_history = 'No'
+                family_history = ''
 
             success = redox.put_new_order(patient_id=p[Redcap.FIELD_LAB_ID],
                                         patient_name_first=p[Redcap.FIELD_NAME_FIRST],

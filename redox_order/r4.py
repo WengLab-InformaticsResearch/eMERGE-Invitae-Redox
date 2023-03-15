@@ -2,6 +2,7 @@ import logging
 import json
 
 from redcap import Project
+from requests import RequestException
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class R4(Project):
             self.endpoint += '/'
         super().__init__(self.endpoint, self.api_token)
 
-    def get_metree_json(record_id):
+    def get_metree_json(self, record_id):
         """ Get MeTree JSON data file from R4
 
         Params
@@ -31,7 +32,7 @@ class R4(Project):
         JSON data object if MeTree is available. Otherwise, None
         """
         try:
-            file_response = self.export_file(record=record_id, field=FIELD_METREE_JSON_FILE)
+            file_response = self.export_file(record=record_id, field=R4.FIELD_METREE_JSON_FILE)
         except RequestException:
             # No MeTree JSON file for this participant
             return None
