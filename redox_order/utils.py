@@ -214,12 +214,12 @@ def describe_patient_history(record):
         if record[emerge_variable_base + past_modifier + checkbox_suffix].lower() in CHECKBOX_POSITIVE_VALUES:
             past_conditions.append(description)
         
-    description = ''
+    condition_strings = list()
     if current_conditions:
-        description += f"Current conditions: {', '.join(current_conditions)}. "
+        condition_strings.append(f"Current conditions: {', '.join(current_conditions)}.")
     if past_conditions:
-        description += f"Past conditions: {', '.join(past_conditions)}."
-    return description    
+        condition_strings.append(f"Past conditions: {', '.join(past_conditions)}.")
+    return ' '.join(condition_strings)
 
 
 def generate_family_history(metree):
