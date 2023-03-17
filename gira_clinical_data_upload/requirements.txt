@@ -1,6 +1,0 @@
-errorhandler
-pandas
-numpy
-SQLAlchemy
-pyodbc
-pycap
