@@ -26,6 +26,7 @@ class Redcap:
     FIELD_SEX = 'sex_at_birth'
     FIELD_AGE = 'age'
     FIELD_RACE = 'race_at_enrollment'
+    FIELD_ASHKENAZI = 'ashkenazi_jewish_ancestors'
     # Invitae Order
     FIELD_SAMPLE_REPLACE = 'sp_invitae_replace'
     FIELD_SAMPLE_RECEIVED = 'sp_invitae_yn'
@@ -126,8 +127,8 @@ class Redcap:
         # Get all fields from Invitae Ordering instrument and record_id and participant_lab_id
         forms = [Redcap._FORM_INVITAE_ORDER]
         fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID, Redcap.FIELD_R4_RECORD_ID,
-                       Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE, Redcap.FIELD_ORDER_LOG] + \
+                       Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST, Redcap.FIELD_DOB, 
+                       Redcap.FIELD_SEX, Redcap.FIELD_RACE, Redcap.FIELD_ASHKENAZI, Redcap.FIELD_ORDER_LOG] + \
                        Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
