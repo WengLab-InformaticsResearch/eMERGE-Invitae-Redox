@@ -23,3 +23,8 @@ participant is ready for order submission.
 
 # Run
 `python batch_order.py`
+
+
+# Contributing sources
+* https://github.com/emerge-ehri/invitae-redox-orders (private repo)
+* https://github.com/stormliucong/eIV-recruitement-support-redcap
