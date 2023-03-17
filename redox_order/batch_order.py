@@ -27,7 +27,7 @@ if __name__ == "__main__":
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     fh.setFormatter(formatter)
     ch.setFormatter(formatter)
     logger.addHandler(fh)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             # Record status
             datestr = date.today().isoformat()
             if success:
-                order_log += f'Order successfully submitted on {datestr}:\n{msg}\n'
+                order_log += f'Order ID {order_id} successfully submitted on {datestr}:\n{msg}\n'
                 redcap.update_order_status(record_id=local_id,
                                         order_new=Redcap.YesNo.NO,
                                         order_status=Redcap.OrderStatus.SUBMITTED,
@@ -154,7 +154,7 @@ if __name__ == "__main__":
                                         order_log=order_log,
                                         form_complete=Redcap.FormComplete.UNVERIFIED)
             else:
-                order_log += f'Order attempt failed on {datestr}.\n'
+                order_log += f'Order ID {order_id} attempt failed on {datestr}.\n'
                 redcap.update_order_status(record_id=local_id,
                                         order_new=Redcap.YesNo.NO,
                                         order_status=Redcap.OrderStatus.FAILED,

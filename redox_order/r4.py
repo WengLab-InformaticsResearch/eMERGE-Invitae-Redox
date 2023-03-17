@@ -1,7 +1,7 @@
 import logging
 import json
 
-from redcap import Project
+from redcap import Project, RedcapError
 from requests import RequestException
 
 logger = logging.getLogger(__name__)
@@ -33,9 +33,9 @@ class R4(Project):
         """
         try:
             file_response = self.export_file(record=record_id, field=R4.FIELD_METREE_JSON_FILE)
-        except RequestException:
+        except RedcapError:
             # No MeTree JSON file for this participant
-            logger.debgu('No MeTree JSON file for this participant')
+            logger.debug('No MeTree JSON file for this participant')
             return None
 
         # Convert response to JSON object

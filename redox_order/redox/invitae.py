@@ -66,6 +66,7 @@ class RedoxInvitaeAPI:
         demogs.LastName = patient_name_last
         demogs.DOB = patient_dob
         demogs.Sex = patient_sex
+        demogs.Race = patient_redox_race
 
         # Fill in Order
         order = message.Order
