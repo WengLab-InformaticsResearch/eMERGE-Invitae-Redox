@@ -131,18 +131,20 @@ class RedoxInvitaeAPI:
             if response.status_code == 200:
                 response_json = response.json()
                 if RedoxInvitaeAPI.check_response(response_json):
-                    logger.error(f'New order unsuccessful for ID {patient_id}.')
-                    return False
+                    error_msg = f'New order unsuccessful for ID {patient_id}.'
+                    logger.error(error_msg)
+                    return False, error_msg
                 else:
                     logger.info(f'New order successful for ID {patient_id}')
-                    return True
+                    return True, j
             else:
-                logger.error(f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
-                return False
+                error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
+                logger.error(error_msg)
+                return False, error_msg
         else:
             logger.debug('In development mode, order was not sent to Redox')
             # Pretend successfully sent order
-            return True
+            return True, j
 
     def query_order(self, patient_id):
         logger.info(f'Query order: {patient_id}')

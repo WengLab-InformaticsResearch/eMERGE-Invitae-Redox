@@ -34,7 +34,8 @@ class Redcap:
     FIELD_ORDER_ID = 'invitae_redox_order_id'
     FIELD_ORDER_DATE = 'invitae_redox_order_date'
     FIELD_ORDER_STATUS = 'invitae_redox_order_status'
-    FIELD_ORDER_FORM_COMPLETE = 'invitae_ordering_complete'
+    FIELD_ORDER_LOG = 'invitae_redox_log'
+    FIELD_ORDER_FORM_COMPLETE = 'redox_invitae_complete'
 
     # Baseline Survey: Personal Health History checkbox fields
     FIELD_BPHH_HYPERTENSION = 'high_blood_pressure_hypert'
@@ -85,8 +86,9 @@ class Redcap:
     class OrderStatus(Enum):
         NOT_ORDERED = '1'
         SUBMITTED = '2'
-        # RECEIVED = '3'
-        # COMPLETED = '4'
+        RECEIVED = '3'
+        COMPLETED = '4'
+        FAILED = '5'
 
     class FormComplete(Enum):
         INCOMPLETE = '0'
@@ -125,7 +127,7 @@ class Redcap:
         forms = [Redcap._FORM_INVITAE_ORDER]
         fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID, Redcap.FIELD_R4_RECORD_ID,
                        Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE] + \
+                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE, Redcap.FIELD_ORDER_LOG] + \
                        Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
@@ -225,7 +227,7 @@ class Redcap:
 
         return max_order_id_num
 
-    def update_order_status(self, record_id, order_new=None, order_status=None, order_date=None, order_id=None):
+    def update_order_status(self, record_id, order_new=None, order_status=None, order_date=None, order_id=None, order_log=None, form_complete=None):
         '''
         Update the Invitae order status in local redcap
 
@@ -236,6 +238,8 @@ class Redcap:
         order_status: [Optional] REDCap.OrderStatus
         order_date: [Optional] date order placed in 'YYYY-MM-DD' format
         order_id: [Optional] locally created order ID
+        order_log: [Optional] order log 
+        form_complete: [Optional] form completion status
 
         Return
         ------
@@ -253,6 +257,10 @@ class Redcap:
             record[Redcap.FIELD_ORDER_DATE] = order_date
         if order_id is not None:
             record[Redcap.FIELD_ORDER_ID] = order_id
+        if order_log is not None:
+            record[Redcap.FIELD_ORDER_LOG] = order_log
+        if form_complete is not None:
+            record[Redcap.FIELD_ORDER_FORM_COMPLETE] = form_complete.value
 
         if len(record) > 1:
             response = self.project.import_records([record])

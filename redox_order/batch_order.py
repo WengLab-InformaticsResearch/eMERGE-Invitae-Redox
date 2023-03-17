@@ -99,7 +99,12 @@ if __name__ == "__main__":
 
         for p in participant_info:
             order_id = redcap.get_new_order_id()
+            local_id = p[Redcap.FIELD_RECORD_ID]
             r4_record_id = p[Redcap.FIELD_R4_RECORD_ID]
+            order_log = p[Redcap.FIELD_ORDER_LOG]
+            if order_log:
+                # Add a visual separator
+                order_log += '==========================\n'
             
             # Map sex, race, and ancestry data from eMERGE to Redox / Invitae values
             sex = map_redcap_sex_to_redox_sex(p[Redcap.FIELD_SEX])
@@ -122,7 +127,7 @@ if __name__ == "__main__":
                 has_family_history = 'No'
                 family_history = ''
 
-            success = redox.put_new_order(patient_id=p[Redcap.FIELD_LAB_ID],
+            success, msg = redox.put_new_order(patient_id=p[Redcap.FIELD_LAB_ID],
                                         patient_name_first=p[Redcap.FIELD_NAME_FIRST],
                                         patient_name_last=p[Redcap.FIELD_NAME_LAST],
                                         patient_dob=p[Redcap.FIELD_DOB],
@@ -136,12 +141,27 @@ if __name__ == "__main__":
                                         has_fam_hist=has_family_history, 
                                         fam_hist=family_history,
                                         test=development)
+            
+            # Record status
+            datestr = date.today().isoformat()
             if success:
-                redcap.update_order_status(record_id=r4_record_id,
+                order_log += f'Order successfully submitted on {datestr}:\n{msg}\n'
+                redcap.update_order_status(record_id=local_id,
                                         order_new=Redcap.YesNo.NO,
                                         order_status=Redcap.OrderStatus.SUBMITTED,
-                                        order_date=date.today().isoformat(),
-                                        order_id=order_id)
+                                        order_date=datestr,
+                                        order_id=order_id,
+                                        order_log=order_log,
+                                        form_complete=Redcap.FormComplete.UNVERIFIED)
+            else:
+                order_log += f'Order attempt failed on {datestr}.\n'
+                redcap.update_order_status(record_id=local_id,
+                                        order_new=Redcap.YesNo.NO,
+                                        order_status=Redcap.OrderStatus.FAILED,
+                                        order_date=datestr,
+                                        order_id=order_id,
+                                        order_log=order_log,
+                                        form_complete=Redcap.FormComplete.INCOMPLETE)
 
     ##################################################################################
     # Invitae currently does not support order status checks. Code below commented out
