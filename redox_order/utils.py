@@ -240,6 +240,7 @@ def generate_family_history(metree):
     if type(metree) is str:
         metree = json.loads(metree)
     elif type(metree) is not list:
+        logger.error(f'metree type error. type: {type(metree)}. value: {metree}')
         raise TypeError
 
     # Create description for each person

@@ -9,7 +9,7 @@ from .model.order_query import Model as OrderQuery
 from .model.order_queryresponse import Model as QueryResponse
 from . import json_templates
 
-SEND_REDOX = False
+SEND_REDOX = True
 
 logger = logging.getLogger('__name__')
 
@@ -50,7 +50,9 @@ class RedoxInvitaeAPI:
 
         template = resources.read_text(json_templates, 'new_order_template.json')
         message = OrderNew.parse_raw(template)
-        datetime_iso = datetime.now().isoformat()
+        
+        # Invitae expects microseconds expressed to 3 digits
+        datetime_iso = datetime.utcnow().isoformat()[:-3] + 'Z'
 
         # Fill in Meta
         message.Meta.EventDateTime = datetime_iso
@@ -153,7 +155,7 @@ class RedoxInvitaeAPI:
         # Send order query
         url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
         j = order.json(exclude_unset=True)
-        logger.debug(j)
+        logger.debug(json.dumps(j))
         if SEND_REDOX:
             response = requests.post(url,
                                     headers={

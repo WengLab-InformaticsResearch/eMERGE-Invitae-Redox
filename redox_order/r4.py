@@ -35,7 +35,8 @@ class R4(Project):
             file_response = self.export_file(record=record_id, field=R4.FIELD_METREE_JSON_FILE)
         except RequestException:
             # No MeTree JSON file for this participant
+            logger.debgu('No MeTree JSON file for this participant')
             return None
 
         # Convert response to JSON object
-        return json.loads(respfile_responseonse[0])
+        return json.loads(file_response[0])

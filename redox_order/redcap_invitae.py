@@ -16,6 +16,7 @@ class Redcap:
     # REDCap variable names
     # IDs
     FIELD_RECORD_ID = 'cuimc_id'  # In CUIMC local REDCap, cuimc_id is the primary Record ID
+    FIELD_R4_RECORD_ID = 'record_id'
     FIELD_LAB_ID = 'participant_lab_id'
     # Participant Info
     FIELD_DOB = 'participant_date_of_birth'
@@ -122,7 +123,7 @@ class Redcap:
         # Specify which forms and fields are needed from the record export
         # Get all fields from Invitae Ordering instrument and record_id and participant_lab_id
         forms = [Redcap._FORM_INVITAE_ORDER]
-        fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
+        fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID, Redcap.FIELD_R4_RECORD_ID,
                        Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
                        Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE] + \
                        Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST

@@ -35,9 +35,6 @@
             }
         }
     },
-    "Visit": {
-        "PatientClass": "Outpatient"
-    },
     "Order": {
         "ID": "12345678",
         "Status": "New",

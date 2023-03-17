@@ -72,7 +72,7 @@ if __name__ == "__main__":
     redcap_project_title = redcap.project.export_project_info()['project_title']
     r4_project_title = r4.export_project_info()['project_title']
     if CHECK_BEFORE_RUNNING:
-        msg = f'Working on redcap project: {redcap_project_title} and R4 project: {r4_project_title}. Enter the "YeS" to continue:\n'
+        msg = f'Working on\nRedcap project: {redcap_project_title}\nR4 project: {r4_project_title}.\nEnter the "YeS" to continue:\n'
         if input(msg) != "YeS":
             print('Exiting')
             exit()    
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
         for p in participant_info:
             order_id = redcap.get_new_order_id()
-            r4_record_id = p[Redcap.FIELD_RECORD_ID]
+            r4_record_id = p[Redcap.FIELD_R4_RECORD_ID]
             
             # Map sex, race, and ancestry data from eMERGE to Redox / Invitae values
             sex = map_redcap_sex_to_redox_sex(p[Redcap.FIELD_SEX])
