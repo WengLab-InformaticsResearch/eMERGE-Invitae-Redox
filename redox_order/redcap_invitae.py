@@ -8,7 +8,7 @@ import re
 import requests
 from redcap import Project
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger(__name__)
 
 class Redcap:
     _FORM_INVITAE_ORDER = 'specimen_reminders'
@@ -16,6 +16,7 @@ class Redcap:
     # REDCap variable names
     # IDs
     FIELD_RECORD_ID = 'cuimc_id'  # In CUIMC local REDCap, cuimc_id is the primary Record ID
+    FIELD_R4_RECORD_ID = 'record_id'
     FIELD_LAB_ID = 'participant_lab_id'
     # Participant Info
     FIELD_DOB = 'participant_date_of_birth'
@@ -25,14 +26,59 @@ class Redcap:
     FIELD_SEX = 'sex_at_birth'
     FIELD_AGE = 'age'
     FIELD_RACE = 'race_at_enrollment'
+    FIELD_ASHKENAZI = 'ashkenazi_jewish_ancestors'
     # Invitae Order
     FIELD_SAMPLE_REPLACE = 'sp_invitae_replace'
     FIELD_SAMPLE_RECEIVED = 'sp_invitae_yn'
-    FIELD_ORDER_READY = 'sp_invitae_redox_order'
-    FIELD_ORDER_ID = 'sp_invitae_redox_order_id'
-    FIELD_ORDER_DATE = 'sp_invitae_redox_order_date'
-    FIELD_ORDER_STATUS = 'sp_invitae_redox_order_status'
-    FIELD_ORDER_FORM_COMPLETE = 'sp_invitae_ordering_complete'
+    # Redox Invitae
+    FIELD_ORDER_READY = 'invitae_redox_order'
+    FIELD_ORDER_ID = 'invitae_redox_order_id'
+    FIELD_ORDER_DATE = 'invitae_redox_order_date'
+    FIELD_ORDER_STATUS = 'invitae_redox_order_status'
+    FIELD_ORDER_LOG = 'invitae_redox_log'
+    FIELD_ORDER_FORM_COMPLETE = 'redox_invitae_complete'
+
+    # Baseline Survey: Personal Health History checkbox fields
+    FIELD_BPHH_HYPERTENSION = 'high_blood_pressure_hypert'
+    FIELD_BPHH_HYPERLIPID = 'high_cholesterol_hyperlipi'
+    FIELD_BPHH_T1DM = 'type_1_diabetes'
+    FIELD_BPHH_T2DM = 'type_2_diabetes'
+    FIELD_BPHH_KD = 'kidney_disease'
+    FIELD_BPHH_ASTHMA = 'asthma'
+    FIELD_BPHH_OBESITY = 'obesity'
+    FIELD_BPHH_SLEEPAPNEA = 'sleep_apnea'
+    FIELD_BPHH_CHD = 'coronary_heart_disease'
+    FIELD_BPHH_HF = 'heart_failure'
+    FIELD_BPHH_AFIB = 'atrial_fibrillation'
+    FIELD_BPHH_BRCA = 'breast_cancer'
+    FIELD_BPHH_OVCA = 'ovarian_cancer'
+    FIELD_BPHH_PRCA = 'prostate_cancer'
+    FIELD_BPHH_PACA = 'pancreatic_cancer'
+    FIELD_BPHH_COCA = 'colorectal_cancer'
+    FIELDS_BPHH_CURRENT = [
+        FIELD_BPHH_HYPERTENSION,
+        FIELD_BPHH_HYPERLIPID,
+        FIELD_BPHH_T1DM,
+        FIELD_BPHH_T2DM,
+        FIELD_BPHH_KD,
+        FIELD_BPHH_ASTHMA,
+        FIELD_BPHH_OBESITY,
+        FIELD_BPHH_SLEEPAPNEA,
+        FIELD_BPHH_CHD,
+        FIELD_BPHH_HF,
+        FIELD_BPHH_AFIB,
+        FIELD_BPHH_BRCA,
+        FIELD_BPHH_OVCA,
+        FIELD_BPHH_PRCA,
+        FIELD_BPHH_PACA,
+        FIELD_BPHH_COCA
+    ]
+    FIELDS_BPHH_PAST = [f'{x}_2' for x in FIELDS_BPHH_CURRENT]
+    FIELDS_BPHH_RISK = [f'{x}_3' for x in FIELDS_BPHH_CURRENT]
+    FIELDS_BPHH = FIELDS_BPHH_CURRENT + FIELDS_BPHH_PAST + FIELDS_BPHH_RISK
+
+    # MeTree
+    FIELD_METREE_JSON = 'metree_json'
 
     class YesNo(Enum):
         NO = '0'
@@ -43,6 +89,7 @@ class Redcap:
         SUBMITTED = '2'
         RECEIVED = '3'
         COMPLETED = '4'
+        FAILED = '5'
 
     class FormComplete(Enum):
         INCOMPLETE = '0'
@@ -79,9 +126,10 @@ class Redcap:
         # Specify which forms and fields are needed from the record export
         # Get all fields from Invitae Ordering instrument and record_id and participant_lab_id
         forms = [Redcap._FORM_INVITAE_ORDER]
-        fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID,
-                       Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST,
-                       Redcap.FIELD_DOB, Redcap.FIELD_SEX, Redcap.FIELD_RACE]
+        fields_info = [Redcap.FIELD_RECORD_ID, Redcap.FIELD_LAB_ID, Redcap.FIELD_R4_RECORD_ID,
+                       Redcap.FIELD_NAME_FIRST, Redcap.FIELD_NAME_LAST, Redcap.FIELD_DOB, 
+                       Redcap.FIELD_SEX, Redcap.FIELD_RACE, Redcap.FIELD_ASHKENAZI, Redcap.FIELD_ORDER_LOG] + \
+                       Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
                               Redcap.FIELD_ORDER_READY]
         fields = fields_info + fields_requirements
@@ -91,12 +139,12 @@ class Redcap:
         for record in records:
             if record[Redcap.FIELD_ORDER_READY] == Redcap.YesNo.YES.value:
                 # Perform various other safeguard checks before placing the order
-                if (record[Redcap.FIELD_ORDER_STATUS] != Redcap.OrderStatus.NOT_ORDERED.value
-                        and record[Redcap.FIELD_ORDER_STATUS]):
-                    logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
-                                   'but the order status must be "Not ordered yet".')
-                    continue
-                elif record[Redcap.FIELD_SAMPLE_RECEIVED] != Redcap.YesNo.YES.value:
+                # if (record[Redcap.FIELD_ORDER_STATUS] != Redcap.OrderStatus.NOT_ORDERED.value
+                #         and record[Redcap.FIELD_ORDER_STATUS]):
+                #     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
+                #                    'but the order status must be "Not ordered yet".')
+                #     continue
+                if record[Redcap.FIELD_SAMPLE_RECEIVED] != Redcap.YesNo.YES.value:
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
                                    'but the sample has not been received.')
                     continue
@@ -109,9 +157,8 @@ class Redcap:
                                    'but the participant age was under 18.')
                     continue
                 else:
-                    # Convert REDCap's sex values to the Redox value set
-                    record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
-                    participant_info.append({f:record[f] for f in fields_info})
+                    # Add participant to list of participants for ordering
+                    participant_info.append(record)
 
         return participant_info
 
@@ -138,7 +185,7 @@ class Redcap:
             if Redcap.OrderStatus.NOT_ORDERED.value < record[Redcap.FIELD_ORDER_STATUS] < Redcap.OrderStatus.COMPLETED.value:
                 # Convert REDCap's sex values to the Redox value set
                 record[Redcap.FIELD_SEX] = Redcap.map_redcap_sex_to_redox_sex(record[Redcap.FIELD_SEX])
-                participant_info.append({f:record[f] for f in fields})
+                participant_info.append(record)
 
         # For testing, return the entire records
         return participant_info
@@ -181,7 +228,7 @@ class Redcap:
 
         return max_order_id_num
 
-    def update_order_status(self, record_id, order_new=None, order_status=None, order_date=None, order_id=None):
+    def update_order_status(self, record_id, order_new=None, order_status=None, order_date=None, order_id=None, order_log=None, form_complete=None):
         '''
         Update the Invitae order status in local redcap
 
@@ -192,6 +239,8 @@ class Redcap:
         order_status: [Optional] REDCap.OrderStatus
         order_date: [Optional] date order placed in 'YYYY-MM-DD' format
         order_id: [Optional] locally created order ID
+        order_log: [Optional] order log 
+        form_complete: [Optional] form completion status
 
         Return
         ------
@@ -209,6 +258,10 @@ class Redcap:
             record[Redcap.FIELD_ORDER_DATE] = order_date
         if order_id is not None:
             record[Redcap.FIELD_ORDER_ID] = order_id
+        if order_log is not None:
+            record[Redcap.FIELD_ORDER_LOG] = order_log
+        if form_complete is not None:
+            record[Redcap.FIELD_ORDER_FORM_COMPLETE] = form_complete.value
 
         if len(record) > 1:
             response = self.project.import_records([record])
@@ -219,17 +272,3 @@ class Redcap:
                 logger.error(f'Unuccessful attempt to update local REDCap with order status: {record}. Response from update attempt: {response}')
 
         return True
-
-    @staticmethod
-    def map_redcap_sex_to_redox_sex(redcap_sex):
-        '''
-        Map REDCap values for sex to Redox
-        '''
-        map = {
-            '1': 'Female',
-            '2': 'Male',
-            '3': 'Other',  # REDCap: Intersex
-            '4': 'Unknown',  # REDCap: Prefer not to answer
-            '': 'Unknown'  # REDCap: (question not answered)
-        }
-        return map[redcap_sex]

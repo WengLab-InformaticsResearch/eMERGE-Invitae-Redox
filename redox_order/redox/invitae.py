@@ -9,9 +9,9 @@ from .model.order_query import Model as OrderQuery
 from .model.order_queryresponse import Model as QueryResponse
 from . import json_templates
 
-SEND_REDOX = False
+SEND_REDOX = True
 
-logger = logging.getLogger('redox_application')
+logger = logging.getLogger('__name__')
 
 class RedoxInvitaeAPI:
     ENDPOINT_AUTH = 'auth/authenticate'
@@ -42,12 +42,17 @@ class RedoxInvitaeAPI:
     def put_new_order(self,
                       patient_id, patient_name_first, patient_name_last, patient_dob, patient_sex, 
                       patient_redox_race, patient_invitae_ancestry,
-                      order_id, test=False):
+                      order_id, 
+                      prim_ind, is_ind_aff, pat_hist,
+                      has_fam_hist, fam_hist,
+                      test=False):
         logger.info(f'New order: {patient_id}')
 
         template = resources.read_text(json_templates, 'new_order_template.json')
         message = OrderNew.parse_raw(template)
-        datetime_iso = datetime.now().isoformat()
+        
+        # Invitae expects microseconds expressed to 3 digits
+        datetime_iso = datetime.utcnow().isoformat()[:-3] + 'Z'
 
         # Fill in Meta
         message.Meta.EventDateTime = datetime_iso
@@ -61,6 +66,7 @@ class RedoxInvitaeAPI:
         demogs.LastName = patient_name_last
         demogs.DOB = patient_dob
         demogs.Sex = patient_sex
+        demogs.Race = patient_redox_race
 
         # Fill in Order
         order = message.Order
@@ -70,7 +76,37 @@ class RedoxInvitaeAPI:
         # Fill in ClinicalInfo
         clinical_info = order.ClinicalInfo
         # primary indication
-
+        clinical_info.append({
+            "Code": "prim_ind",
+            "Description": "Primary Indication",
+            "Value": prim_ind
+        })
+        # individual affected or symptomatic
+        clinical_info.append({
+            "Code": "is_ind_aff",
+            "Description": "Is the patient affected or symptomatic?",
+            "Value": is_ind_aff
+        })
+        # patient history
+        if pat_hist:
+            clinical_info.append({
+                "Code": "pat_hist",
+                "Description": "Describe patient history, incl. age of diagnosis",
+                "Value": pat_hist
+           })
+        # has family history
+        clinical_info.append({
+            "Code": "has_fam_hist",
+            "Description": "Family history of disease?",
+            "Value": has_fam_hist
+        })
+        # family history
+        if fam_hist:
+            clinical_info.append({
+                "Code": "fam_hist",
+                "Description": "Describe family history, incl. age(s) of diagnosis",
+                "Value": fam_hist
+           })
         # patient ancestry
         if patient_invitae_ancestry:
             clinical_info.append({
@@ -79,12 +115,13 @@ class RedoxInvitaeAPI:
                 "Value": '|'.join(patient_invitae_ancestry)
            })
 
-        # Send new order
-        url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+        # Create the JSON message        
         j = message.json(exclude_unset=True)
         logger.debug(j)
 
         if SEND_REDOX:
+            # Send new order        
+            url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
             response = requests.post(url,
                                     headers={
                                         'Content-Type': 'application/json',
@@ -95,18 +132,20 @@ class RedoxInvitaeAPI:
             if response.status_code == 200:
                 response_json = response.json()
                 if RedoxInvitaeAPI.check_response(response_json):
-                    logger.error(f'New order unsuccessful for ID {patient_id}.')
-                    return False
+                    error_msg = f'New order unsuccessful for ID {patient_id}.'
+                    logger.error(error_msg)
+                    return False, error_msg
                 else:
                     logger.info(f'New order successful for ID {patient_id}')
-                    return True
+                    return True, j
             else:
-                logger.error(f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
-                return False
+                error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
+                logger.error(error_msg)
+                return False, error_msg
         else:
             logger.debug('In development mode, order was not sent to Redox')
             # Pretend successfully sent order
-            return True
+            return True, j
 
     def query_order(self, patient_id):
         logger.info(f'Query order: {patient_id}')
@@ -119,7 +158,7 @@ class RedoxInvitaeAPI:
         # Send order query
         url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
         j = order.json(exclude_unset=True)
-        logger.debug(j)
+        logger.debug(json.dumps(j))
         if SEND_REDOX:
             response = requests.post(url,
                                     headers={
