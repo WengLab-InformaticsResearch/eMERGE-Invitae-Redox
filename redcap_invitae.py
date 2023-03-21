@@ -27,6 +27,7 @@ class Redcap:
     FIELD_AGE = 'age'
     FIELD_RACE = 'race_at_enrollment'
     FIELD_ASHKENAZI = 'ashkenazi_jewish_ancestors'
+    FIELD_WITHDRAWAL = 'participant_withdrawal'
     # Invitae Order
     FIELD_SAMPLE_REPLACE = 'sp_invitae_replace'
     FIELD_SAMPLE_RECEIVED = 'sp_invitae_yn'
@@ -131,7 +132,7 @@ class Redcap:
                        Redcap.FIELD_SEX, Redcap.FIELD_RACE, Redcap.FIELD_ASHKENAZI, Redcap.FIELD_ORDER_LOG] + \
                        Redcap.FIELDS_BPHH_CURRENT + Redcap.FIELDS_BPHH_PAST
         fields_requirements = [Redcap.FIELD_AGE, Redcap.FIELD_SAMPLE_RECEIVED, Redcap.FIELD_SAMPLE_REPLACE,
-                              Redcap.FIELD_ORDER_READY]
+                              Redcap.FIELD_ORDER_READY, Redcap.FIELD_WITHDRAWAL]
         fields = fields_info + fields_requirements
 
         participant_info = []
@@ -146,15 +147,19 @@ class Redcap:
                 #     continue
                 if record[Redcap.FIELD_SAMPLE_RECEIVED] != Redcap.YesNo.YES.value:
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
-                                   'but the sample has not been received.')
+                                   'but the sample has not been received. Order not placed.')
                     continue
                 elif record[Redcap.FIELD_SAMPLE_REPLACE] == Redcap.YesNo.YES.value:
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
-                                   'but the sample needs to be replaced.')
+                                   'but the sample needs to be replaced. Order not placed.')
                     continue
                 elif int(record[Redcap.FIELD_AGE]) < 18:
                     logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
-                                   'but the participant age was under 18.')
+                                   'but the participant age was under 18. Order not placed.')
+                    continue
+                elif record[Redcap.FIELD_WITHDRAWAL] == Redcap.YesNo.YES.value:
+                    logger.warning(f'CUIMC ID {record[Redcap.FIELD_RECORD_ID]} was marked for submitting order, '
+                                   'but the participant has withdrawn. Order not placed.')
                     continue
                 else:
                     # Add participant to list of participants for ordering
