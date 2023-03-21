@@ -9,7 +9,7 @@ from .model.order_query import Model as OrderQuery
 from .model.order_queryresponse import Model as QueryResponse
 from . import json_templates
 
-SEND_REDOX = True
+SEND_REDOX = False
 
 logger = logging.getLogger('__name__')
 
@@ -120,69 +120,77 @@ class RedoxInvitaeAPI:
         logger.debug(j)
 
         if SEND_REDOX:
-            # Send new order        
-            url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
-            response = requests.post(url,
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': f'Bearer {self.access_token}'
-                                    },
-                                    data=j)
+            send_it = True
+            if test:
+                # In test mode, confirm that order should be sent
+                send_it = input(f'Send order for {patient_name_first} {patient_name_last}? Enter "yes" to continue: ') == 'yes'
+            if send_it:
+                # Send new order        
+                url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+                response = requests.post(url,
+                                        headers={
+                                            'Content-Type': 'application/json',
+                                            'Authorization': f'Bearer {self.access_token}'
+                                        },
+                                        data=j)
 
-            if response.status_code == 200:
-                response_json = response.json()
-                if RedoxInvitaeAPI.check_response(response_json):
-                    error_msg = f'New order unsuccessful for ID {patient_id}.'
+                if response.status_code == 200:
+                    response_json = response.json()
+                    if RedoxInvitaeAPI.check_response(response_json):
+                        error_msg = f'New order unsuccessful for ID {patient_id}.'
+                        logger.error(error_msg)
+                        return False, error_msg
+                    else:
+                        logger.info(f'New order successful for ID {patient_id}')
+                        return True, j
+                else:
+                    error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
                     logger.error(error_msg)
                     return False, error_msg
-                else:
-                    logger.info(f'New order successful for ID {patient_id}')
-                    return True, j
-            else:
-                error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
-                logger.error(error_msg)
-                return False, error_msg
         else:
             logger.debug('In development mode, order was not sent to Redox')
             # Pretend successfully sent order
             return True, j
 
     def query_order(self, patient_id):
-        logger.info(f'Query order: {patient_id}')
+        # logger.info(f'Query order: {patient_id}')
 
-        # TODO: determine what information is required for Order Query
-        template = resources.read_text(json_templates, 'query_order_template.json')
-        order = OrderQuery.parse_raw(template)
-        order.Patients[0].Identifiers[0].ID = patient_id  # put order for new patients.
+        # # TODO: determine what information is required for Order Query
+        # template = resources.read_text(json_templates, 'query_order_template.json')
+        # order = OrderQuery.parse_raw(template)
+        # order.Patients[0].Identifiers[0].ID = patient_id  # put order for new patients.
 
-        # Send order query
-        url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
-        j = order.json(exclude_unset=True)
-        logger.debug(json.dumps(j))
-        if SEND_REDOX:
-            response = requests.post(url,
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': f'Bearer {self.access_token}'
-                                    },
-                                    data=j)
+        # # Send order query
+        # url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+        # j = order.json(exclude_unset=True)
+        # logger.debug(json.dumps(j))
+        # if SEND_REDOX:
+        #     response = requests.post(url,
+        #                             headers={
+        #                                 'Content-Type': 'application/json',
+        #                                 'Authorization': f'Bearer {self.access_token}'
+        #                             },
+        #                             data=j)
 
-            # TODO: need to find out what's in the returned data
-            if response.status_code == 200:
-                response_json = response.json()
-                if RedoxInvitaeAPI.check_response(response_json):
-                    logger.error(f'Query order unsuccessful for ID {patient_id}.')
-                    return None
-                else:
-                    logger.info(f'Query order successful for ID {patient_id}')
-                    return response_json
-            else:
-                logger.error(f'Query order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
-                return None
-        else:
-            logger.debug('In development mode, order query was not sent to Redox')
-            # Pretend successfully queried order
-            return dict()
+        #     # TODO: need to find out what's in the returned data
+        #     if response.status_code == 200:
+        #         response_json = response.json()
+        #         if RedoxInvitaeAPI.check_response(response_json):
+        #             logger.error(f'Query order unsuccessful for ID {patient_id}.')
+        #             return None
+        #         else:
+        #             logger.info(f'Query order successful for ID {patient_id}')
+        #             return response_json
+        #     else:
+        #         logger.error(f'Query order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
+        #         return None
+        # else:
+        #     logger.debug('In development mode, order query was not sent to Redox')
+        #     # Pretend successfully queried order
+        #     return dict()
+
+        # Invitae doesn't currently support this. Leaving the above code there in case it's implemented in future.
+        raise NotImplementedError
 
     @staticmethod
     def check_response(response):
