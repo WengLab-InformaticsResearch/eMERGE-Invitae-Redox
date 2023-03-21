@@ -9,7 +9,7 @@ from .model.order_query import Model as OrderQuery
 from .model.order_queryresponse import Model as QueryResponse
 from . import json_templates
 
-SEND_REDOX = True
+SEND_REDOX = False
 
 logger = logging.getLogger('__name__')
 
@@ -120,28 +120,33 @@ class RedoxInvitaeAPI:
         logger.debug(j)
 
         if SEND_REDOX:
-            # Send new order        
-            url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
-            response = requests.post(url,
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': f'Bearer {self.access_token}'
-                                    },
-                                    data=j)
+            send_it = True
+            if test:
+                # In test mode, confirm that order should be sent
+                send_it = input(f'Send order for {patient_name_first} {patient_name_last}? Enter "yes" to continue: ') == 'yes'
+            if send_it:
+                # Send new order        
+                url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+                response = requests.post(url,
+                                        headers={
+                                            'Content-Type': 'application/json',
+                                            'Authorization': f'Bearer {self.access_token}'
+                                        },
+                                        data=j)
 
-            if response.status_code == 200:
-                response_json = response.json()
-                if RedoxInvitaeAPI.check_response(response_json):
-                    error_msg = f'New order unsuccessful for ID {patient_id}.'
+                if response.status_code == 200:
+                    response_json = response.json()
+                    if RedoxInvitaeAPI.check_response(response_json):
+                        error_msg = f'New order unsuccessful for ID {patient_id}.'
+                        logger.error(error_msg)
+                        return False, error_msg
+                    else:
+                        logger.info(f'New order successful for ID {patient_id}')
+                        return True, j
+                else:
+                    error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
                     logger.error(error_msg)
                     return False, error_msg
-                else:
-                    logger.info(f'New order successful for ID {patient_id}')
-                    return True, j
-            else:
-                error_msg = f'New order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}'
-                logger.error(error_msg)
-                return False, error_msg
         else:
             logger.debug('In development mode, order was not sent to Redox')
             # Pretend successfully sent order
