@@ -153,41 +153,44 @@ class RedoxInvitaeAPI:
             return True, j
 
     def query_order(self, patient_id):
-        logger.info(f'Query order: {patient_id}')
+        # logger.info(f'Query order: {patient_id}')
 
-        # TODO: determine what information is required for Order Query
-        template = resources.read_text(json_templates, 'query_order_template.json')
-        order = OrderQuery.parse_raw(template)
-        order.Patients[0].Identifiers[0].ID = patient_id  # put order for new patients.
+        # # TODO: determine what information is required for Order Query
+        # template = resources.read_text(json_templates, 'query_order_template.json')
+        # order = OrderQuery.parse_raw(template)
+        # order.Patients[0].Identifiers[0].ID = patient_id  # put order for new patients.
 
-        # Send order query
-        url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
-        j = order.json(exclude_unset=True)
-        logger.debug(json.dumps(j))
-        if SEND_REDOX:
-            response = requests.post(url,
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': f'Bearer {self.access_token}'
-                                    },
-                                    data=j)
+        # # Send order query
+        # url = urljoin(self.api_base_url, RedoxInvitaeAPI.ENDPOINT_ENDPOINT)
+        # j = order.json(exclude_unset=True)
+        # logger.debug(json.dumps(j))
+        # if SEND_REDOX:
+        #     response = requests.post(url,
+        #                             headers={
+        #                                 'Content-Type': 'application/json',
+        #                                 'Authorization': f'Bearer {self.access_token}'
+        #                             },
+        #                             data=j)
 
-            # TODO: need to find out what's in the returned data
-            if response.status_code == 200:
-                response_json = response.json()
-                if RedoxInvitaeAPI.check_response(response_json):
-                    logger.error(f'Query order unsuccessful for ID {patient_id}.')
-                    return None
-                else:
-                    logger.info(f'Query order successful for ID {patient_id}')
-                    return response_json
-            else:
-                logger.error(f'Query order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
-                return None
-        else:
-            logger.debug('In development mode, order query was not sent to Redox')
-            # Pretend successfully queried order
-            return dict()
+        #     # TODO: need to find out what's in the returned data
+        #     if response.status_code == 200:
+        #         response_json = response.json()
+        #         if RedoxInvitaeAPI.check_response(response_json):
+        #             logger.error(f'Query order unsuccessful for ID {patient_id}.')
+        #             return None
+        #         else:
+        #             logger.info(f'Query order successful for ID {patient_id}')
+        #             return response_json
+        #     else:
+        #         logger.error(f'Query order unsuccessful for ID {patient_id}. Response: {response.status_code} - {response.text}')
+        #         return None
+        # else:
+        #     logger.debug('In development mode, order query was not sent to Redox')
+        #     # Pretend successfully queried order
+        #     return dict()
+
+        # Invitae doesn't currently support this. Leaving the above code there in case it's implemented in future.
+        raise NotImplementedError
 
     @staticmethod
     def check_response(response):
