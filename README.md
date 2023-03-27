@@ -19,6 +19,10 @@ participant is ready for order submission.
     1.  `Patient.Demographics.PhoneNumber` - use your site contact information
     1.  `Patient.Demographics.Address` - use your site contact information
     1.  `Order.Provider`
+1.  Make other site-specific configuration changes, including, but not limited to:
+    1.  Create an ordering instrument in your local REDCap. For reference, a REDCap instrument file is included in 
+        `misc/redcap-instrument-redox-invitae.zip`.
+    1.  In `redcap_invitae.py`, update `FIELD_RECORD_ID` to the name of the REDCap record ID field for your project
     
 
 # Run
