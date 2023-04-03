@@ -23,6 +23,13 @@ participant is ready for order submission.
     1.  Create an ordering instrument in your local REDCap. For reference, a REDCap instrument file is included in 
         `misc/redcap-instrument-redox-invitae.zip`.
     1.  In `redcap_invitae.py`, update `FIELD_RECORD_ID` to the name of the REDCap record ID field for your project
+1.  There are a few safety checkpoints in place during development to reduce the chance of sensitive data being transmitted:
+    1.  When `redox-api.config` has `DEVELOPMENT = True`, in `batch_order.py`:
+        1.  Names of the REDCap projects will be printed, and the user will be prompted to continue 
+        1.  Names of participants collected for order submission will be printed, and the user will be prompted to continue
+    1.  In `invitae.py`, `SEND_REDOX` is set to `False` by default and will prevent actual order submission. Order info will
+        be printed to logs for verification. The code will behave as though orders were successfully submitted. 
+        Set `SEND_REDOX` to `True` to enable sending orders. 
     
 
 # Run
