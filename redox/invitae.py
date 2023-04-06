@@ -148,7 +148,7 @@ class RedoxInvitaeAPI:
                     logger.error(error_msg)
                     return False, error_msg
         else:
-            logger.debug('In development mode, order was not sent to Redox')
+            logger.debug('SEND_REDOX set to False, order was not sent to Redox')
             # Pretend successfully sent order
             return True, j
 
