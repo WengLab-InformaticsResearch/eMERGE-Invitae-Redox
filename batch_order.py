@@ -93,7 +93,7 @@ if __name__ == "__main__":
         # Currently in development. Show what information has been collecetd and verify before continuing to send data out
         logger.debug('The following participant data have been collected for placing new orders:')
         logger.debug('; '.join(f"{p[Redcap.FIELD_RECORD_ID]}: {p[Redcap.FIELD_NAME_FIRST]} {p[Redcap.FIELD_NAME_LAST]}" for p in participant_info))
-        if input('Enter "yes" to continue: ') != 'yes':
+        if CHECK_BEFORE_RUNNING and (input('Enter "yes" to continue: ') != 'yes'):
             logger.debug('Exiting script prior to sending Redox orders.')
             exit()
 
