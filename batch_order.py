@@ -101,6 +101,8 @@ if __name__ == "__main__":
             order_id = redcap.get_new_order_id()
             local_id = p[Redcap.FIELD_RECORD_ID]
             r4_record_id = p[Redcap.FIELD_R4_RECORD_ID]
+            logger.debug(f'Processing participant CUIMC {local_id}, R4 {r4_record_id}')
+            
             order_log = p[Redcap.FIELD_ORDER_LOG]
             if order_log:
                 # Add a visual separator
